@@ -1,5 +1,5 @@
 export const metadata = {
-  title: "Medical Diagnostic Assistant",
+  title: "Diagnova",
   description: "AI-powered clinical reasoning support system",
 };
 

@@ -71,7 +71,7 @@ export default function Page() {
           const welcomeMessage: Message = {
             id: 0,
             role: 'assistant',
-            content: '👋 ¡Hola! Soy tu asistente médico inteligente.\n\nPuedo ayudarte a:\n• Hacer un análisis clínico detallado\n• Analizar imágenes médicas\n• Generar diagnósticos diferenciales\n\n¿Cuál es tu consulta hoy?',
+            content: '👋 ¡Hola! Soy Diagnova, tu asistente médico inteligente.\n\nPuedo ayudarte a:\n• Hacer un análisis clínico detallado\n• Analizar imágenes médicas\n• Generar diagnósticos diferenciales\n\n¿Cuál es tu consulta hoy?',
             timestamp: new Date().toISOString()
           };
 
@@ -340,7 +340,7 @@ export default function Page() {
               gap: 12
             }}>
               <span style={{ fontSize: 32 }}>🏥</span>
-              Asistente Médico IA
+              Diagnova
             </h1>
             <p style={{ 
               fontSize: 13, 

@@ -1,4 +1,4 @@
-# Medical Diagnostic Assistant 🏥
+# Diagnova 🏥
 
 Un asistente médico inteligente basado en agentes que utiliza IA para conducir entrevistas clínicas, analizar imágenes médicas y generar evaluaciones diagnósticas estructuradas.
 
@@ -55,7 +55,7 @@ Usuario → FastAPI → LangGraph Agents → GPT-4o → PostgreSQL
 ```bash
 # 1. Clonar el repositorio
 git clone <repo-url>
-cd Medical-Diagnostic-Assistant
+cd Diagnova
 
 # 2. Crear archivo .env (ver CONFIG.md para el template completo)
 cat > .env << EOF
@@ -188,7 +188,7 @@ pytest tests/ -v
 ## 📁 Estructura del Proyecto
 
 ```
-Medical-Diagnostic-Assistant/
+Diagnova/
 ├── apps/
 │   ├── api/                    # Backend FastAPI
 │   │   ├── app/

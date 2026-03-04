@@ -1,6 +1,6 @@
 # Quick Start Guide 🚀
 
-Get the Medical Diagnostic Assistant running in 5 minutes!
+Get Diagnova running in 5 minutes!
 
 ## Prerequisites
 

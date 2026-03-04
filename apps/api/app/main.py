@@ -23,7 +23,7 @@ from app.db.models import MessageRole
 from app.agents.graph import process_user_message, process_image_upload, force_diagnosis
 from app.core.config import settings
 
-app = FastAPI(title="Medical Diagnostic Assistant", version="0.2.0")
+app = FastAPI(title="Diagnova", version="0.2.0")
 
 app.add_middleware(
     CORSMiddleware,

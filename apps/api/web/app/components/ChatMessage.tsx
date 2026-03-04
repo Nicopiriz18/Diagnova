@@ -49,7 +49,7 @@ export default function ChatMessage({ role, content, images, timestamp }: ChatMe
             color: '#6b7280',
             fontWeight: 600
           }}>
-            {isUser ? 'Tú' : 'Asistente Médico'}
+            {isUser ? 'Tú' : 'Diagnova'}
           </span>
         </div>
 

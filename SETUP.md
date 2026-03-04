@@ -1,8 +1,8 @@
-# Medical Diagnostic Assistant - Setup Guide
+# Diagnova - Setup Guide
 
 ## Overview
 
-This is a complete medical diagnostic assistant system that uses:
+Diagnova es un sistema de asistencia diagnóstica que utiliza:
 - **LangGraph agents** for conversational medical interviews
 - **GPT-4o Vision** for medical image analysis
 - **PostgreSQL** for session storage
@@ -20,7 +20,7 @@ This is a complete medical diagnostic assistant system that uses:
 ### 1. Clone and Navigate
 
 ```bash
-cd Medical-Diagnostic-Assistant
+cd Diagnova
 ```
 
 ### 2. Create Environment File

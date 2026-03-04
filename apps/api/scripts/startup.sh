@@ -1,11 +1,11 @@
 #!/bin/sh
 
-# Startup script for Medical Diagnostic Assistant
+# Startup script for Diagnova
 # This script initializes the database
 
 set -e
 
-echo "🏥 Medical Diagnostic Assistant - Startup"
+echo "🏥 Diagnova - Startup"
 echo "=========================================="
 
 # Wait for database to be ready
