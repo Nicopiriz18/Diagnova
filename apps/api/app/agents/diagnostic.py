@@ -233,31 +233,8 @@ class DiagnosticAgent:
         )
     
     def _create_final_message(self, assessment: ClinicalAssessment) -> str:
-        """Create a natural language summary of the assessment"""
-        msg_parts = [
-            "📋 **ANÁLISIS CLÍNICO COMPLETO**\n",
-            f"**Resumen:** {assessment.patient_summary}\n",
-            "\n**Diagnósticos Diferenciales:**"
-        ]
-        
-        for i, dx in enumerate(assessment.differentials[:3], 1):
-            msg_parts.append(
-                f"{i}. {dx.name} (probabilidad: {dx.likelihood}%, urgencia: {dx.urgency})"
-            )
-            msg_parts.append(f"   Razonamiento: {dx.reasoning}")
-        
-        if assessment.red_flags:
-            msg_parts.append("\n⚠️ **Señales de Alarma:**")
-            for flag in assessment.red_flags:
-                msg_parts.append(f"- [{flag.severity.upper()}] {flag.message}")
-        
-        msg_parts.append(f"\n**Plan de Acción:**")
-        for action in assessment.action_plan[:3]:
-            msg_parts.append(f"- [{action.priority.upper()}] {action.action}")
-        
-        msg_parts.append(f"\n⚕️ **IMPORTANTE:** {assessment.limitations}")
-        
-        return "\n".join(msg_parts)
+        """Create a short acknowledgment message — full details are shown in the DiagnosticPanel"""
+        return "📋 He generado la evaluación diagnóstica completa. Revisa el panel a continuación con todos los detalles."
 
 
 # Singleton instance

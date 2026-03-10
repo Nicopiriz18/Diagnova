@@ -1,4 +1,7 @@
-import { useState, useRef, KeyboardEvent } from 'react';
+import { useState, useRef, KeyboardEvent } from "react";
+import { Paperclip, Send, Loader2 } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 
 interface ChatInputProps {
   onSendMessage: (message: string) => void;
@@ -7,128 +10,111 @@ interface ChatInputProps {
   uploading?: boolean;
 }
 
-export default function ChatInput({ onSendMessage, onUploadImage, disabled, uploading }: ChatInputProps) {
-  const [message, setMessage] = useState('');
+export default function ChatInput({
+  onSendMessage,
+  onUploadImage,
+  disabled,
+  uploading,
+}: ChatInputProps) {
+  const [message, setMessage] = useState("");
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   const handleSend = () => {
     if (message.trim() && !disabled) {
       onSendMessage(message.trim());
-      setMessage('');
+      setMessage("");
+      if (textareaRef.current) {
+        textareaRef.current.style.height = "auto";
+      }
     }
   };
 
-  const handleKeyPress = (e: KeyboardEvent<HTMLTextAreaElement>) => {
-    if (e.key === 'Enter' && !e.shiftKey) {
+  const handleKeyDown = (e: KeyboardEvent<HTMLTextAreaElement>) => {
+    if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
       handleSend();
     }
   };
 
-  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      onUploadImage(file);
-    }
-    // Reset input
-    if (fileInputRef.current) {
-      fileInputRef.current.value = '';
-    }
+  const handleInput = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    setMessage(e.target.value);
+    const el = e.target;
+    el.style.height = "auto";
+    el.style.height = `${Math.min(el.scrollHeight, 120)}px`;
   };
 
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) onUploadImage(file);
+    if (fileInputRef.current) fileInputRef.current.value = "";
+  };
+
+  const isDisabled = disabled || uploading;
+  const canSend = message.trim().length > 0 && !isDisabled;
+
   return (
-    <div style={{
-      position: 'sticky',
-      bottom: 0,
-      background: 'white',
-      padding: '16px',
-      borderTop: '1px solid #e5e7eb',
-      boxShadow: '0 -2px 10px rgba(0,0,0,0.05)'
-    }}>
-      <div style={{
-        maxWidth: 1200,
-        margin: '0 auto',
-        display: 'flex',
-        gap: 12,
-        alignItems: 'flex-end'
-      }}>
-        {/* Botón de imagen */}
-        <button
-          onClick={() => fileInputRef.current?.click()}
-          disabled={disabled || uploading}
-          style={{
-            padding: '12px',
-            borderRadius: '50%',
-            border: '1px solid #e5e7eb',
-            background: uploading ? '#f3f4f6' : 'white',
-            cursor: disabled || uploading ? 'not-allowed' : 'pointer',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            fontSize: 20,
-            transition: 'all 0.2s',
-            opacity: disabled || uploading ? 0.5 : 1
-          }}
-          title="Adjuntar imagen"
-        >
-          {uploading ? '⏳' : '📎'}
-        </button>
-        <input
-          ref={fileInputRef}
-          type="file"
-          accept="image/*"
-          onChange={handleFileSelect}
-          style={{ display: 'none' }}
-        />
+    <div className="shrink-0 border-t border-border bg-card/60 backdrop-blur-sm px-6 py-4">
+      <div className="max-w-3xl mx-auto">
+        <div className="flex items-end gap-3 rounded-2xl border border-border bg-background px-4 py-3 focus-within:border-primary/50 transition-colors">
+          {/* Attach image button */}
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon"
+            onClick={() => fileInputRef.current?.click()}
+            disabled={isDisabled}
+            className="shrink-0 h-8 w-8 text-muted-foreground hover:text-foreground"
+            title="Adjuntar imagen"
+          >
+            {uploading ? (
+              <Loader2 className="w-4 h-4 animate-spin" />
+            ) : (
+              <Paperclip className="w-4 h-4" />
+            )}
+          </Button>
 
-        {/* Input de texto */}
-        <textarea
-          value={message}
-          onChange={(e) => setMessage(e.target.value)}
-          onKeyPress={handleKeyPress}
-          placeholder={disabled ? "Esperando respuesta..." : "Escribe tu mensaje... (Shift+Enter para nueva línea)"}
-          disabled={disabled}
-          rows={1}
-          style={{
-            flex: 1,
-            padding: '12px 16px',
-            borderRadius: 24,
-            border: '1px solid #e5e7eb',
-            fontSize: 15,
-            fontFamily: 'inherit',
-            resize: 'none',
-            minHeight: 48,
-            maxHeight: 120,
-            background: disabled ? '#f9fafb' : 'white',
-            color: '#111827',
-            outline: 'none'
-          }}
-          onFocus={(e) => e.target.style.borderColor = '#2563eb'}
-          onBlur={(e) => e.target.style.borderColor = '#e5e7eb'}
-        />
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/*"
+            onChange={handleFileSelect}
+            className="hidden"
+          />
 
-        {/* Botón enviar */}
-        <button
-          onClick={handleSend}
-          disabled={disabled || !message.trim()}
-          style={{
-            padding: '12px 24px',
-            borderRadius: 24,
-            border: 'none',
-            background: disabled || !message.trim() ? '#d1d5db' : '#2563eb',
-            color: 'white',
-            cursor: disabled || !message.trim() ? 'not-allowed' : 'pointer',
-            fontWeight: 600,
-            fontSize: 15,
-            display: 'flex',
-            alignItems: 'center',
-            gap: 6,
-            transition: 'all 0.2s',
-            minWidth: 100
-          }}
-        >
-          Enviar 📤
-        </button>
+          {/* Textarea */}
+          <textarea
+            ref={textareaRef}
+            value={message}
+            onChange={handleInput}
+            onKeyDown={handleKeyDown}
+            placeholder={
+              isDisabled ? "Esperando respuesta..." : "Escribe tu mensaje... (Shift+Enter para nueva línea)"
+            }
+            disabled={isDisabled}
+            rows={1}
+            className={cn(
+              "flex-1 resize-none bg-transparent text-sm text-foreground placeholder:text-muted-foreground focus:outline-none min-h-[32px] max-h-[120px] leading-relaxed py-0.5",
+              isDisabled && "cursor-not-allowed opacity-60"
+            )}
+          />
+
+          {/* Send button */}
+          <Button
+            type="button"
+            size="icon"
+            onClick={handleSend}
+            disabled={!canSend}
+            className="shrink-0 h-8 w-8 rounded-xl"
+            title="Enviar"
+          >
+            <Send className="w-4 h-4" />
+          </Button>
+        </div>
+
+        <p className="text-[11px] text-muted-foreground/60 mt-2 text-center">
+          Diagnova es un asistente de apoyo clínico — no reemplaza el criterio médico profesional.
+        </p>
       </div>
     </div>
   );

@@ -52,6 +52,9 @@ class ConversationState(TypedDict):
     # Internal agent metadata
     turn_count: int
     last_agent: str  # Which agent last acted
+    
+    # Interviewer's clinical reasoning for the current turn
+    agent_reasoning: str
 
 
 # Required information categories for a complete assessment
@@ -84,6 +87,7 @@ def create_initial_state(session_id: str) -> ConversationState:
         final_assessment={},
         turn_count=0,
         last_agent="",
+        agent_reasoning="",
     )
 
 def calculate_confidence_score(state: ConversationState) -> float:

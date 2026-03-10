@@ -10,7 +10,7 @@ class Settings(BaseSettings):
 
     # OpenAI Configuration
     OPENAI_API_KEY: str = ""
-    OPENAI_MODEL_TEXT: str = "gpt-4-turbo"
+    OPENAI_MODEL_TEXT: str = "gpt-4o"
     OPENAI_MODEL_VISION: str = "gpt-4o"
 
     # PostgreSQL Configuration

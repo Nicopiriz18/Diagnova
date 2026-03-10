@@ -170,9 +170,25 @@ async def load_state_from_db(
     
     state["messages"] = messages
     
-    # Extract symptoms and other metadata from messages if stored
-    # In practice, you might want to store these explicitly or extract them
-    
+    # Restore interview state from the most recent assistant message metadata.
+    # Each assistant message persists the full state snapshot, so the last one
+    # contains the accumulated categories, symptoms, and confidence.
+    sorted_msgs = sorted(session.messages, key=lambda m: m.timestamp)
+    for msg in reversed(sorted_msgs):
+        if msg.role == MessageRole.ASSISTANT and msg.message_metadata:
+            meta = msg.message_metadata
+            if "info_categories_covered" in meta:
+                state["info_categories_covered"] = meta["info_categories_covered"]
+            if "symptoms" in meta:
+                state["symptoms"] = meta.get("symptoms", [])
+            if "confidence_score" in meta:
+                state["confidence_score"] = meta["confidence_score"]
+            if "agent_reasoning" in meta:
+                state["agent_reasoning"] = meta.get("agent_reasoning", "")
+            if meta.get("patient_info"):
+                state["patient_info"] = {**state["patient_info"], **meta["patient_info"]}
+            break
+
     # Load diagnostic result if exists
     diag_result = await get_diagnostic_result(db, session_id)
     if diag_result:
