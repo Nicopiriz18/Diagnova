@@ -167,7 +167,11 @@ async def send_message(
                 message_metadata={
                     "confidence_score": updated_state.get("confidence_score", 0.0),
                     "phase": updated_state.get("current_phase", "interview"),
-                    "final_diagnosis": updated_state.get("current_phase", "interview") == "completed"
+                    "final_diagnosis": updated_state.get("current_phase", "interview") == "completed",
+                    "info_categories_covered": updated_state.get("info_categories_covered", {}),
+                    "symptoms": updated_state.get("symptoms", []),
+                    "agent_reasoning": updated_state.get("agent_reasoning", ""),
+                    "patient_info": updated_state.get("patient_info", {}),
                 }
             )
             

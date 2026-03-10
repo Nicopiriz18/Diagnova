@@ -5,6 +5,7 @@ import ChatMessage from "./components/ChatMessage";
 import ChatInput from "./components/ChatInput";
 import DiagnosticPanel from "./components/DiagnosticPanel";
 import ImagePreview from "./components/ImagePreview";
+import ConfidenceEvolutionPanel, { ConfidenceSnapshot } from "./components/ConfidenceEvolutionPanel";
 
 interface Message {
   id: number;
@@ -12,6 +13,15 @@ interface Message {
   content: string;
   images?: string[];
   timestamp: string;
+  message_metadata?: {
+    confidence_score?: number;
+    phase?: string;
+    final_diagnosis?: boolean;
+    info_categories_covered?: Record<string, boolean>;
+    symptoms?: string[];
+    agent_reasoning?: string;
+    patient_info?: Record<string, any>;
+  };
 }
 
 export default function Page() {
@@ -26,7 +36,8 @@ export default function Page() {
   const [showWelcome, setShowWelcome] = useState(true);
   const [diagnosisProgress, setDiagnosisProgress] = useState<string | null>(null);
   const [isGeneratingDiagnosis, setIsGeneratingDiagnosis] = useState(false);
-  
+  const [confidenceHistory, setConfidenceHistory] = useState<ConfidenceSnapshot[]>([]);
+
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 
@@ -129,10 +140,26 @@ export default function Page() {
         role: 'assistant',
         content: data.content,
         images: data.images,
-        timestamp: data.timestamp
+        timestamp: data.timestamp,
+        message_metadata: data.message_metadata,
       };
       
       setMessages(prev => [...prev, assistantMessage]);
+
+      // Actualizar historial de confianza si hay metadata
+      if (data.message_metadata?.confidence_score !== undefined) {
+        setConfidenceHistory(prev => [
+          ...prev,
+          {
+            turn: prev.length + 1,
+            score: data.message_metadata.confidence_score ?? 0,
+            categories: data.message_metadata.info_categories_covered ?? {},
+            symptoms: data.message_metadata.symptoms ?? [],
+            agentReasoning: data.message_metadata.agent_reasoning ?? "",
+            patientInfo: data.message_metadata.patient_info ?? {},
+          }
+        ]);
+      }
 
       // Verificar si hay un diagnóstico en el message_metadata
       if (data.message_metadata?.final_diagnosis) {
@@ -298,6 +325,7 @@ export default function Page() {
     setSessionStatus('active');
     setError(null);
     setShowWelcome(true);
+    setConfidenceHistory([]);
     createSession();
   };
 
@@ -403,14 +431,19 @@ export default function Page() {
         </div>
       )}
 
+      {/* Main area: chat + side panel */}
+      <div style={{ flex: 1, display: 'flex', overflow: 'hidden' }}>
+
+        {/* Left: chat column */}
+        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+
       {/* Chat Area */}
       <div style={{
         flex: 1,
         overflowY: 'auto',
         padding: '24px',
-        paddingBottom: '100px'
       }}>
-        <div style={{ maxWidth: 1000, margin: '0 auto' }}>
+        <div style={{ maxWidth: 900, margin: '0 auto' }}>
           {/* Loading inicial */}
           {loading && messages.length === 0 && (
             <div style={{ 
@@ -635,6 +668,15 @@ export default function Page() {
           uploading={uploading}
         />
       )}
+
+        </div>{/* end chat column */}
+
+        {/* Right: confidence side panel */}
+        {sessionStatus === 'active' && !diagnostic && confidenceHistory.length > 0 && (
+          <ConfidenceEvolutionPanel history={confidenceHistory} />
+        )}
+
+      </div>{/* end main area row */}
 
       {/* Styles for animations */}
       <style jsx global>{`

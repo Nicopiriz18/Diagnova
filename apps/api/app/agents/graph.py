@@ -23,10 +23,12 @@ from app.agents.orchestrator import (
 
 async def interviewer_node(state: ConversationState) -> Dict[str, Any]:
     """Node that runs the interviewer agent"""
+    extraction_updates: Dict[str, Any] = {}
+
     # First, process the last user response if exists
     if state["messages"] and state["messages"][-1]["role"] == "user":
         extraction_updates = await interviewer_agent.process_user_response(state)
-        # Apply extraction updates to state
+        # Apply extraction updates to local state so run() can see them
         state = {**state, **extraction_updates}
     
     # Then generate next question
@@ -35,7 +37,9 @@ async def interviewer_node(state: ConversationState) -> Dict[str, Any]:
     # Update phase
     updates["current_phase"] = AgentPhase.INTERVIEW
     
-    return updates
+    # Merge extraction_updates so LangGraph persists categories, symptoms, and
+    # confidence_score — run() keys take precedence where there is overlap.
+    return {**extraction_updates, **updates}
 
 
 async def ready_check_node(state: ConversationState) -> Dict[str, Any]:
