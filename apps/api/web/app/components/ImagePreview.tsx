@@ -1,3 +1,5 @@
+import { Loader2, X } from "lucide-react";
+
 interface ImagePreviewProps {
   url: string;
   analyzing?: boolean;
@@ -6,55 +8,18 @@ interface ImagePreviewProps {
 
 export default function ImagePreview({ url, analyzing, onClose }: ImagePreviewProps) {
   return (
-    <div style={{
-      position: 'relative',
-      display: 'inline-block',
-      marginTop: 8
-    }}>
-      <div style={{
-        position: 'relative',
-        borderRadius: 12,
-        overflow: 'hidden',
-        border: '2px solid #e5e7eb',
-        background: 'white'
-      }}>
+    <div className="relative inline-block mt-2">
+      <div className="relative rounded-xl overflow-hidden border border-border bg-card">
         <img
           src={url}
           alt="Imagen subida"
-          style={{
-            maxWidth: '300px',
-            maxHeight: '300px',
-            display: 'block',
-            objectFit: 'contain'
-          }}
+          className="block max-w-[300px] max-h-[300px] object-contain"
         />
-        
+
         {analyzing && (
-          <div style={{
-            position: 'absolute',
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            background: 'rgba(0,0,0,0.7)',
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            justifyContent: 'center',
-            color: 'white',
-            fontSize: 14,
-            fontWeight: 600
-          }}>
-            <div style={{
-              width: 40,
-              height: 40,
-              border: '4px solid rgba(255,255,255,0.3)',
-              borderTopColor: 'white',
-              borderRadius: '50%',
-              animation: 'spin 1s linear infinite',
-              marginBottom: 12
-            }} />
-            Analizando imagen...
+          <div className="absolute inset-0 bg-black/60 flex flex-col items-center justify-center gap-3">
+            <Loader2 className="w-8 h-8 text-white animate-spin" />
+            <span className="text-white text-xs font-semibold">Analizando imagen...</span>
           </div>
         )}
       </div>
@@ -62,26 +27,10 @@ export default function ImagePreview({ url, analyzing, onClose }: ImagePreviewPr
       {onClose && !analyzing && (
         <button
           onClick={onClose}
-          style={{
-            position: 'absolute',
-            top: -8,
-            right: -8,
-            width: 28,
-            height: 28,
-            borderRadius: '50%',
-            border: 'none',
-            background: '#ef4444',
-            color: 'white',
-            cursor: 'pointer',
-            fontSize: 16,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            boxShadow: '0 2px 4px rgba(0,0,0,0.2)'
-          }}
           title="Eliminar"
+          className="absolute -top-2 -right-2 w-6 h-6 rounded-full bg-destructive text-destructive-foreground flex items-center justify-center shadow-md hover:bg-destructive/90 transition-colors"
         >
-          ×
+          <X className="w-3.5 h-3.5" />
         </button>
       )}
     </div>

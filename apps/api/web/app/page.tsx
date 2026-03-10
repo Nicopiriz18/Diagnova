@@ -1,15 +1,18 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
+import { RefreshCw, Stethoscope, Loader2, ClipboardList, Zap } from "lucide-react";
 import ChatMessage from "./components/ChatMessage";
 import ChatInput from "./components/ChatInput";
 import DiagnosticPanel from "./components/DiagnosticPanel";
-import ImagePreview from "./components/ImagePreview";
 import ConfidenceEvolutionPanel, { ConfidenceSnapshot } from "./components/ConfidenceEvolutionPanel";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { cn } from "@/lib/utils";
 
 interface Message {
   id: number;
-  role: 'user' | 'assistant';
+  role: "user" | "assistant";
   content: string;
   images?: string[];
   timestamp: string;
@@ -31,7 +34,7 @@ export default function Page() {
   const [typing, setTyping] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [diagnostic, setDiagnostic] = useState<any>(null);
-  const [sessionStatus, setSessionStatus] = useState<'active' | 'completed'>('active');
+  const [sessionStatus, setSessionStatus] = useState<"active" | "completed">("active");
   const [error, setError] = useState<string | null>(null);
   const [showWelcome, setShowWelcome] = useState(true);
   const [diagnosisProgress, setDiagnosisProgress] = useState<string | null>(null);
@@ -41,7 +44,6 @@ export default function Page() {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 
-  // Auto-scroll to bottom cuando hay nuevos mensajes
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   };
@@ -50,7 +52,6 @@ export default function Page() {
     scrollToBottom();
   }, [messages, typing]);
 
-  // Crear sesión al montar
   useEffect(() => {
     createSession();
   }, []);
@@ -67,23 +68,22 @@ export default function Page() {
       for (let attempt = 0; attempt < maxRetries; attempt++) {
         try {
           const response = await fetch(`${API_URL}/v1/sessions`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({})
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({}),
           });
 
-          if (!response.ok) {
-            throw new Error('Error al crear la sesión');
-          }
+          if (!response.ok) throw new Error("Error al crear la sesión");
 
           const data = await response.json();
           setSessionId(data.id);
 
           const welcomeMessage: Message = {
             id: 0,
-            role: 'assistant',
-            content: '👋 ¡Hola! Soy Diagnova, tu asistente médico inteligente.\n\nPuedo ayudarte a:\n• Hacer un análisis clínico detallado\n• Analizar imágenes médicas\n• Generar diagnósticos diferenciales\n\n¿Cuál es tu consulta hoy?',
-            timestamp: new Date().toISOString()
+            role: "assistant",
+            content:
+              "¡Hola! Soy Diagnova, tu asistente médico inteligente.\n\nPuedo ayudarte a:\n• Hacer un análisis clínico detallado\n• Analizar imágenes médicas\n• Generar diagnósticos diferenciales\n\n¿Cuál es tu consulta hoy?",
+            timestamp: new Date().toISOString(),
           };
 
           setMessages([welcomeMessage]);
@@ -92,13 +92,13 @@ export default function Page() {
         } catch (err) {
           lastError = err;
           if (attempt < maxRetries - 1) {
-            await new Promise(r => setTimeout(r, baseDelayMs * (attempt + 1)));
+            await new Promise((r) => setTimeout(r, baseDelayMs * (attempt + 1)));
           }
         }
       }
       throw lastError;
     } catch (err) {
-      setError('No se pudo conectar con el servidor. Verifica que la API esté corriendo.');
+      setError("No se pudo conectar con el servidor. Verifica que la API esté corriendo.");
       console.error(err);
     } finally {
       setLoading(false);
@@ -108,47 +108,42 @@ export default function Page() {
   const sendMessage = async (content: string) => {
     if (!sessionId) return;
 
-    // Agregar mensaje del usuario
     const userMessage: Message = {
       id: Date.now(),
-      role: 'user',
+      role: "user",
       content,
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
     };
-    
-    setMessages(prev => [...prev, userMessage]);
+
+    setMessages((prev) => [...prev, userMessage]);
     setLoading(true);
     setTyping(true);
     setError(null);
 
     try {
       const response = await fetch(`${API_URL}/v1/sessions/${sessionId}/messages`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ content })
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ content }),
       });
 
-      if (!response.ok) {
-        throw new Error('Error al enviar el mensaje');
-      }
+      if (!response.ok) throw new Error("Error al enviar el mensaje");
 
       const data = await response.json();
-      
-      // Agregar respuesta del asistente
+
       const assistantMessage: Message = {
         id: data.id,
-        role: 'assistant',
+        role: "assistant",
         content: data.content,
         images: data.images,
         timestamp: data.timestamp,
         message_metadata: data.message_metadata,
       };
-      
-      setMessages(prev => [...prev, assistantMessage]);
 
-      // Actualizar historial de confianza si hay metadata
+      setMessages((prev) => [...prev, assistantMessage]);
+
       if (data.message_metadata?.confidence_score !== undefined) {
-        setConfidenceHistory(prev => [
+        setConfidenceHistory((prev) => [
           ...prev,
           {
             turn: prev.length + 1,
@@ -157,17 +152,15 @@ export default function Page() {
             symptoms: data.message_metadata.symptoms ?? [],
             agentReasoning: data.message_metadata.agent_reasoning ?? "",
             patientInfo: data.message_metadata.patient_info ?? {},
-          }
+          },
         ]);
       }
 
-      // Verificar si hay un diagnóstico en el message_metadata
       if (data.message_metadata?.final_diagnosis) {
-        // Cargar el diagnóstico
         loadDiagnosis();
       }
     } catch (err) {
-      setError('Error al comunicarse con el servidor');
+      setError("Error al comunicarse con el servidor");
       console.error(err);
     } finally {
       setLoading(false);
@@ -183,38 +176,32 @@ export default function Page() {
 
     try {
       const formData = new FormData();
-      formData.append('file', file);
+      formData.append("file", file);
 
       const response = await fetch(`${API_URL}/v1/sessions/${sessionId}/images`, {
-        method: 'POST',
-        body: formData
+        method: "POST",
+        body: formData,
       });
 
-      if (!response.ok) {
-        throw new Error('Error al subir la imagen');
-      }
+      if (!response.ok) throw new Error("Error al subir la imagen");
 
       const data = await response.json();
-      
-      // Agregar mensaje del usuario con la imagen
+
       const userMessage: Message = {
         id: Date.now(),
-        role: 'user',
-        content: '📷 Imagen subida',
+        role: "user",
+        content: "Imagen subida",
         images: [data.url],
-        timestamp: new Date().toISOString()
+        timestamp: new Date().toISOString(),
       };
-      
-      setMessages(prev => [...prev, userMessage]);
 
-      // La API responde automáticamente con el análisis
-      // Esperar un poco y recargar mensajes
+      setMessages((prev) => [...prev, userMessage]);
+
       setTimeout(() => {
         refreshSession();
       }, 1000);
-
     } catch (err) {
-      setError('Error al subir la imagen');
+      setError("Error al subir la imagen");
       console.error(err);
     } finally {
       setUploading(false);
@@ -226,24 +213,22 @@ export default function Page() {
 
     try {
       const response = await fetch(`${API_URL}/v1/sessions/${sessionId}`);
-      
       if (!response.ok) return;
 
       const data = await response.json();
-      
-      // Actualizar mensajes con los del servidor
+
       if (data.messages && data.messages.length > messages.length) {
         const serverMessages = data.messages.map((msg: any) => ({
           id: msg.id,
           role: msg.role,
           content: msg.content,
           images: msg.images,
-          timestamp: msg.timestamp
+          timestamp: msg.timestamp,
         }));
         setMessages(serverMessages);
       }
     } catch (err) {
-      console.error('Error al refrescar la sesión:', err);
+      console.error("Error al refrescar la sesión:", err);
     }
   };
 
@@ -252,67 +237,62 @@ export default function Page() {
 
     try {
       const response = await fetch(`${API_URL}/v1/sessions/${sessionId}/diagnosis`);
-      
       if (!response.ok) return;
 
       const data = await response.json();
       setDiagnostic(data.assessment);
-      setSessionStatus('completed');
+      setSessionStatus("completed");
     } catch (err) {
-      console.error('Error al cargar diagnóstico:', err);
+      console.error("Error al cargar diagnóstico:", err);
     }
   };
 
   const forceDiagnosis = async () => {
     if (!sessionId) return;
 
-    if (!confirm('¿Estás seguro de que quieres finalizar la consulta y obtener el diagnóstico?')) {
+    if (!confirm("¿Estás seguro de que quieres finalizar la consulta y obtener el diagnóstico?")) {
       return;
     }
 
     setIsGeneratingDiagnosis(true);
-    setDiagnosisProgress('Iniciando análisis diagnóstico...');
+    setDiagnosisProgress("Iniciando análisis diagnóstico...");
     setError(null);
 
     try {
-      // Use EventSource for Server-Sent Events
       const eventSource = new EventSource(`${API_URL}/v1/sessions/${sessionId}/finalize`);
-      
-      eventSource.addEventListener('progress', (event) => {
+
+      eventSource.addEventListener("progress", (event) => {
         const data = JSON.parse(event.data);
         setDiagnosisProgress(data.message);
       });
-      
-      eventSource.addEventListener('complete', (event) => {
+
+      eventSource.addEventListener("complete", (event) => {
         const data = JSON.parse(event.data);
         setDiagnostic(data.assessment);
-        setSessionStatus('completed');
+        setSessionStatus("completed");
         setDiagnosisProgress(null);
         setIsGeneratingDiagnosis(false);
-        
-        // Agregar mensaje del asistente
+
         const diagMessage: Message = {
           id: Date.now(),
-          role: 'assistant',
-          content: '📋 He generado la evaluación diagnóstica completa. Revisa el panel a continuación con todos los detalles.',
-          timestamp: new Date().toISOString()
+          role: "assistant",
+          content: "He generado la evaluación diagnóstica completa. Revisa el panel a continuación con todos los detalles.",
+          timestamp: new Date().toISOString(),
         };
-        
-        setMessages(prev => [...prev, diagMessage]);
-        
-        eventSource.close();
-      });
-      
-      eventSource.addEventListener('error', (event) => {
-        console.error('SSE Error:', event);
-        setError('Error al generar el diagnóstico');
-        setDiagnosisProgress(null);
-        setIsGeneratingDiagnosis(false);
+
+        setMessages((prev) => [...prev, diagMessage]);
         eventSource.close();
       });
 
+      eventSource.addEventListener("error", (event) => {
+        console.error("SSE Error:", event);
+        setError("Error al generar el diagnóstico");
+        setDiagnosisProgress(null);
+        setIsGeneratingDiagnosis(false);
+        eventSource.close();
+      });
     } catch (err) {
-      setError('Error al generar el diagnóstico');
+      setError("Error al generar el diagnóstico");
       console.error(err);
       setDiagnosisProgress(null);
       setIsGeneratingDiagnosis(false);
@@ -322,7 +302,7 @@ export default function Page() {
   const startNewSession = () => {
     setMessages([]);
     setDiagnostic(null);
-    setSessionStatus('active');
+    setSessionStatus("active");
     setError(null);
     setShowWelcome(true);
     setConfidenceHistory([]);
@@ -332,374 +312,193 @@ export default function Page() {
   const quickActions = [
     "Tengo dolor de cabeza intenso desde hace 2 días",
     "Me duele el pecho cuando respiro profundo",
-    "Tengo fiebre alta y dolor de garganta"
+    "Tengo fiebre alta y dolor de garganta",
   ];
 
   return (
-    <div style={{ 
-      display: 'flex', 
-      flexDirection: 'column', 
-      height: '100vh',
-      background: '#f9fafb',
-      fontFamily: 'system-ui'
-    }}>
+    <div className="flex flex-col h-screen bg-background">
       {/* Header */}
-      <header style={{
-        background: 'white',
-        borderBottom: '1px solid #e5e7eb',
-        padding: '16px 24px',
-        boxShadow: '0 1px 3px rgba(0,0,0,0.1)'
-      }}>
-        <div style={{
-          maxWidth: 1200,
-          margin: '0 auto',
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center'
-        }}>
-          <div>
-            <h1 style={{ 
-              fontSize: 24, 
-              fontWeight: 700, 
-              color: '#111827',
-              margin: 0,
-              display: 'flex',
-              alignItems: 'center',
-              gap: 12
-            }}>
-              <span style={{ fontSize: 32 }}>🏥</span>
-              Diagnova
-            </h1>
-            <p style={{ 
-              fontSize: 13, 
-              color: '#6b7280', 
-              margin: '4px 0 0 0'
-            }}>
-              Sistema de agentes con RAG e análisis de imágenes
-            </p>
+      <header className="shrink-0 border-b border-border bg-card/50 backdrop-blur-sm px-6 py-3.5 z-10">
+        <div className="max-w-[1400px] mx-auto flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="flex items-center justify-center w-9 h-9 rounded-lg bg-primary/10 border border-primary/20">
+              <Stethoscope className="w-5 h-5 text-primary" />
+            </div>
+            <div>
+              <h1 className="text-base font-semibold text-foreground leading-none">Diagnova</h1>
+              <p className="text-xs text-muted-foreground mt-0.5">
+                Sistema de agentes con RAG e análisis de imágenes
+              </p>
+            </div>
           </div>
-          
-          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-            {/* Estado de sesión */}
+
+          <div className="flex items-center gap-3">
             {sessionId && (
-              <div style={{
-                padding: '6px 12px',
-                borderRadius: 16,
-                background: sessionStatus === 'active' ? '#dcfce7' : '#dbeafe',
-                color: sessionStatus === 'active' ? '#166534' : '#1e40af',
-                fontSize: 12,
-                fontWeight: 600
-              }}>
-                {sessionStatus === 'active' ? '🟢 Activa' : '✅ Completada'}
-              </div>
+              <Badge
+                variant={sessionStatus === "active" ? "success" : "info"}
+                className="text-xs"
+              >
+                {sessionStatus === "active" ? "Sesión activa" : "Completada"}
+              </Badge>
             )}
-            
-            {/* Botón nueva conversación */}
-            <button
+
+            <Button
+              variant="outline"
+              size="sm"
               onClick={startNewSession}
-              style={{
-                padding: '8px 16px',
-                borderRadius: 8,
-                border: '1px solid #e5e7eb',
-                background: 'white',
-                color: '#374151',
-                cursor: 'pointer',
-                fontWeight: 600,
-                fontSize: 14,
-                display: 'flex',
-                alignItems: 'center',
-                gap: 6
-              }}
+              className="gap-2 text-xs"
             >
-              🔄 Nueva Conversación
-            </button>
+              <RefreshCw className="w-3.5 h-3.5" />
+              Nueva consulta
+            </Button>
           </div>
         </div>
       </header>
 
       {/* Error Banner */}
       {error && (
-        <div style={{
-          background: '#fef2f2',
-          borderBottom: '1px solid #fca5a5',
-          padding: '12px 24px',
-          textAlign: 'center'
-        }}>
-          <p style={{ color: '#dc2626', fontWeight: 600, margin: 0 }}>
-            ❌ {error}
-          </p>
+        <div className="shrink-0 bg-destructive/10 border-b border-destructive/20 px-6 py-2.5">
+          <p className="text-sm text-destructive font-medium text-center">{error}</p>
         </div>
       )}
 
-      {/* Main area: chat + side panel */}
-      <div style={{ flex: 1, display: 'flex', overflow: 'hidden' }}>
-
-        {/* Left: chat column */}
-        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
-
-      {/* Chat Area */}
-      <div style={{
-        flex: 1,
-        overflowY: 'auto',
-        padding: '24px',
-      }}>
-        <div style={{ maxWidth: 900, margin: '0 auto' }}>
-          {/* Loading inicial */}
-          {loading && messages.length === 0 && (
-            <div style={{ 
-              textAlign: 'center', 
-              padding: '40px',
-              color: '#6b7280'
-            }}>
-              <div style={{
-                width: 40,
-                height: 40,
-                border: '4px solid #e5e7eb',
-                borderTopColor: '#2563eb',
-                borderRadius: '50%',
-                animation: 'spin 1s linear infinite',
-                margin: '0 auto 16px'
-              }} />
-              <p>Iniciando sesión...</p>
-            </div>
-          )}
-
-          {/* Quick actions (mostrar solo al inicio) */}
-          {showWelcome && messages.length <= 1 && sessionId && (
-            <div style={{
-              background: 'white',
-              borderRadius: 12,
-              padding: 20,
-              marginBottom: 24,
-              border: '1px solid #e5e7eb'
-            }}>
-              <p style={{ fontSize: 14, color: '#6b7280', marginBottom: 12 }}>
-                💡 O prueba con una de estas consultas comunes:
-              </p>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                {quickActions.map((action, idx) => (
-                  <button
-                    key={idx}
-                    onClick={() => sendMessage(action)}
-                    disabled={loading}
-                    style={{
-                      padding: '12px 16px',
-                      borderRadius: 8,
-                      border: '1px solid #e5e7eb',
-                      background: 'white',
-                      color: '#374151',
-                      cursor: 'pointer',
-                      textAlign: 'left',
-                      fontSize: 14,
-                      transition: 'all 0.2s'
-                    }}
-                    onMouseEnter={(e) => {
-                      e.currentTarget.style.background = '#f9fafb';
-                      e.currentTarget.style.borderColor = '#2563eb';
-                    }}
-                    onMouseLeave={(e) => {
-                      e.currentTarget.style.background = 'white';
-                      e.currentTarget.style.borderColor = '#e5e7eb';
-                    }}
-                  >
-                    {action}
-                  </button>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* Mensajes */}
-          {messages.map((msg) => (
-            <ChatMessage
-              key={msg.id}
-              role={msg.role}
-              content={msg.content}
-              images={msg.images}
-              timestamp={msg.timestamp}
-            />
-          ))}
-
-          {/* Typing indicator */}
-          {typing && (
-            <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 16 }}>
-              <div style={{
-                width: 32,
-                height: 32,
-                borderRadius: '50%',
-                background: '#10b981',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center'
-              }}>
-                🏥
-              </div>
-              <div style={{
-                background: 'white',
-                padding: '12px 16px',
-                borderRadius: 18,
-                border: '1px solid #e5e7eb'
-              }}>
-                <div style={{ display: 'flex', gap: 4 }}>
-                  <span style={{ animation: 'bounce 1.4s infinite', animationDelay: '0s' }}>●</span>
-                  <span style={{ animation: 'bounce 1.4s infinite', animationDelay: '0.2s' }}>●</span>
-                  <span style={{ animation: 'bounce 1.4s infinite', animationDelay: '0.4s' }}>●</span>
+      {/* Main area: chat + sidebar */}
+      <div className="flex flex-1 overflow-hidden">
+        {/* Chat column */}
+        <div className="flex flex-1 flex-col overflow-hidden">
+          {/* Scrollable chat area */}
+          <div className="flex-1 overflow-y-auto px-6 py-6">
+            <div className="max-w-3xl mx-auto space-y-1">
+              {/* Initial loading */}
+              {loading && messages.length === 0 && (
+                <div className="flex flex-col items-center justify-center py-20 gap-4 text-muted-foreground">
+                  <Loader2 className="w-8 h-8 animate-spin text-primary" />
+                  <p className="text-sm">Iniciando sesión...</p>
                 </div>
-              </div>
-            </div>
-          )}
+              )}
 
-          {/* Botón forzar diagnóstico */}
-          {sessionId && messages.length > 2 && sessionStatus === 'active' && !diagnostic && (
-            <div style={{
-              background: '#eff6ff',
-              borderRadius: 12,
-              padding: 20,
-              marginTop: 24,
-              border: '1px solid #bfdbfe',
-              textAlign: 'center'
-            }}>
-              <p style={{ fontSize: 14, color: '#1e40af', marginBottom: 12 }}>
-                ¿Ya tienes suficiente información para el diagnóstico?
-              </p>
-              <button
-                onClick={forceDiagnosis}
-                disabled={isGeneratingDiagnosis}
-                style={{
-                  padding: '12px 24px',
-                  borderRadius: 8,
-                  border: 'none',
-                  background: isGeneratingDiagnosis ? '#94a3b8' : '#2563eb',
-                  color: 'white',
-                  cursor: isGeneratingDiagnosis ? 'not-allowed' : 'pointer',
-                  fontWeight: 600,
-                  fontSize: 15,
-                  opacity: isGeneratingDiagnosis ? 0.7 : 1
-                }}
-              >
-                📋 Generar Diagnóstico Completo
-              </button>
-            </div>
-          )}
+              {/* Quick action chips */}
+              {showWelcome && messages.length <= 1 && sessionId && (
+                <div className="rounded-xl border border-border bg-card/60 p-4 mb-4 animate-fade-in">
+                  <p className="text-xs text-muted-foreground mb-3 flex items-center gap-1.5">
+                    <Zap className="w-3.5 h-3.5 text-amber-400" />
+                    Consultas frecuentes
+                  </p>
+                  <div className="flex flex-col gap-2">
+                    {quickActions.map((action, idx) => (
+                      <button
+                        key={idx}
+                        onClick={() => sendMessage(action)}
+                        disabled={loading}
+                        className="text-left px-3.5 py-2.5 rounded-lg border border-border bg-background/60 text-sm text-foreground hover:bg-accent hover:border-primary/40 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        {action}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
 
-          {/* Progress indicator for diagnosis generation */}
-          {isGeneratingDiagnosis && diagnosisProgress && (
-            <div style={{
-              background: 'white',
-              borderRadius: 12,
-              padding: 24,
-              marginTop: 24,
-              border: '2px solid #3b82f6',
-              boxShadow: '0 4px 6px rgba(59, 130, 246, 0.1)'
-            }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginBottom: 16 }}>
-                <div style={{
-                  width: 48,
-                  height: 48,
-                  borderRadius: '50%',
-                  border: '4px solid #e0e7ff',
-                  borderTopColor: '#3b82f6',
-                  animation: 'spin 1s linear infinite'
-                }} />
-                <div style={{ flex: 1 }}>
-                  <h3 style={{ 
-                    margin: 0, 
-                    fontSize: 16, 
-                    fontWeight: 600, 
-                    color: '#1e40af',
-                    marginBottom: 4
-                  }}>
-                    🧠 Análisis Clínico en Progreso
-                  </h3>
-                  <p style={{ 
-                    margin: 0, 
-                    fontSize: 14, 
-                    color: '#6b7280',
-                    fontStyle: 'italic'
-                  }}>
-                    {diagnosisProgress}
+              {/* Messages */}
+              {messages.map((msg) => (
+                <ChatMessage
+                  key={msg.id}
+                  role={msg.role}
+                  content={msg.content}
+                  images={msg.images}
+                  timestamp={msg.timestamp}
+                />
+              ))}
+
+              {/* Typing indicator */}
+              {typing && (
+                <div className="flex items-center gap-3 py-2 animate-fade-in">
+                  <div className="flex items-center justify-center w-8 h-8 rounded-full bg-emerald-500/10 border border-emerald-500/20 shrink-0">
+                    <Stethoscope className="w-4 h-4 text-emerald-400" />
+                  </div>
+                  <div className="bg-card border border-border px-4 py-3 rounded-2xl rounded-tl-sm">
+                    <div className="flex gap-1 items-center">
+                      <span
+                        className="w-1.5 h-1.5 rounded-full bg-muted-foreground animate-bounce-dot"
+                        style={{ animationDelay: "0ms" }}
+                      />
+                      <span
+                        className="w-1.5 h-1.5 rounded-full bg-muted-foreground animate-bounce-dot"
+                        style={{ animationDelay: "150ms" }}
+                      />
+                      <span
+                        className="w-1.5 h-1.5 rounded-full bg-muted-foreground animate-bounce-dot"
+                        style={{ animationDelay: "300ms" }}
+                      />
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Force diagnosis prompt */}
+              {sessionId && messages.length > 2 && sessionStatus === "active" && !diagnostic && !isGeneratingDiagnosis && (
+                <div className="rounded-xl border border-primary/20 bg-primary/5 p-4 mt-4 text-center animate-fade-in">
+                  <p className="text-sm text-muted-foreground mb-3">
+                    ¿Ya tienes suficiente información para generar el diagnóstico?
+                  </p>
+                  <Button
+                    onClick={forceDiagnosis}
+                    disabled={isGeneratingDiagnosis}
+                    size="sm"
+                    className="gap-2"
+                  >
+                    <ClipboardList className="w-4 h-4" />
+                    Generar Diagnóstico Completo
+                  </Button>
+                </div>
+              )}
+
+              {/* Diagnosis generation progress */}
+              {isGeneratingDiagnosis && diagnosisProgress && (
+                <div className="rounded-xl border border-primary/30 bg-card p-5 mt-4 animate-fade-in">
+                  <div className="flex items-center gap-4 mb-4">
+                    <div className="shrink-0 w-10 h-10 rounded-full border border-primary/30 flex items-center justify-center">
+                      <Loader2 className="w-5 h-5 text-primary animate-spin" />
+                    </div>
+                    <div className="min-w-0">
+                      <p className="text-sm font-semibold text-foreground">Análisis Clínico en Progreso</p>
+                      <p className="text-xs text-muted-foreground mt-0.5 italic truncate">
+                        {diagnosisProgress}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="h-1.5 w-full rounded-full bg-secondary overflow-hidden">
+                    <div className="h-full w-2/3 rounded-full bg-gradient-to-r from-primary to-blue-400 animate-progress-bar" />
+                  </div>
+                  <p className="text-xs text-muted-foreground mt-3 text-center">
+                    Este proceso puede tomar entre 10–15 segundos...
                   </p>
                 </div>
-              </div>
-              
-              {/* Progress bar */}
-              <div style={{
-                width: '100%',
-                height: 6,
-                background: '#e0e7ff',
-                borderRadius: 3,
-                overflow: 'hidden'
-              }}>
-                <div style={{
-                  height: '100%',
-                  background: 'linear-gradient(90deg, #3b82f6, #60a5fa)',
-                  animation: 'progressBar 2s ease-in-out infinite',
-                  width: '70%'
-                }} />
-              </div>
-              
-              <p style={{ 
-                fontSize: 12, 
-                color: '#9ca3af', 
-                marginTop: 12,
-                marginBottom: 0,
-                textAlign: 'center'
-              }}>
-                Este proceso puede tomar entre 10-15 segundos...
-              </p>
+              )}
+
+              {/* Diagnostic panel */}
+              {diagnostic && <DiagnosticPanel assessment={diagnostic} />}
+
+              <div ref={messagesEndRef} />
             </div>
-          )}
+          </div>
 
-          {/* Panel de diagnóstico */}
-          {diagnostic && (
-            <DiagnosticPanel assessment={diagnostic} />
+          {/* Chat Input */}
+          {sessionId && sessionStatus === "active" && !diagnostic && (
+            <ChatInput
+              onSendMessage={sendMessage}
+              onUploadImage={uploadImage}
+              disabled={loading || typing}
+              uploading={uploading}
+            />
           )}
-
-          <div ref={messagesEndRef} />
         </div>
-      </div>
 
-      {/* Chat Input (fijo abajo) */}
-      {sessionId && sessionStatus === 'active' && !diagnostic && (
-        <ChatInput
-          onSendMessage={sendMessage}
-          onUploadImage={uploadImage}
-          disabled={loading || typing}
-          uploading={uploading}
-        />
-      )}
-
-        </div>{/* end chat column */}
-
-        {/* Right: confidence side panel */}
-        {sessionStatus === 'active' && !diagnostic && confidenceHistory.length > 0 && (
+        {/* Right: confidence sidebar */}
+        {sessionStatus === "active" && !diagnostic && confidenceHistory.length > 0 && (
           <ConfidenceEvolutionPanel history={confidenceHistory} />
         )}
-
-      </div>{/* end main area row */}
-
-      {/* Styles for animations */}
-      <style jsx global>{`
-        @keyframes fadeIn {
-          from { opacity: 0; transform: translateY(10px); }
-          to { opacity: 1; transform: translateY(0); }
-        }
-        
-        @keyframes spin {
-          to { transform: rotate(360deg); }
-        }
-        
-        @keyframes bounce {
-          0%, 60%, 100% { transform: translateY(0); }
-          30% { transform: translateY(-10px); }
-        }
-        
-        @keyframes progressBar {
-          0% { transform: translateX(-100%); }
-          50% { transform: translateX(100%); }
-          100% { transform: translateX(-100%); }
-        }
-      `}</style>
+      </div>
     </div>
   );
 }

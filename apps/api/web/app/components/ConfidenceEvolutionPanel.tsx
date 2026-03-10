@@ -1,5 +1,11 @@
 "use client";
 
+import { Brain, CheckCircle2, Circle, TrendingUp, User } from "lucide-react";
+import { Progress } from "@/components/ui/progress";
+import { Badge } from "@/components/ui/badge";
+import { Separator } from "@/components/ui/separator";
+import { cn } from "@/lib/utils";
+
 export interface ConfidenceSnapshot {
   turn: number;
   score: number;
@@ -14,48 +20,30 @@ interface Props {
 }
 
 const CATEGORY_LABELS: Record<string, string> = {
-  chief_complaint:     "Motivo de consulta",
-  symptom_onset:       "Inicio de síntomas",
-  symptom_duration:    "Duración",
+  chief_complaint: "Motivo de consulta",
+  symptom_onset: "Inicio de síntomas",
+  symptom_duration: "Duración",
   symptom_progression: "Progresión",
-  severity:            "Severidad",
+  severity: "Severidad",
   associated_symptoms: "Síntomas asociados",
-  medical_history:     "Antecedentes",
-  medications:         "Medicamentos",
-  allergies:           "Alergias",
-  social_history:      "Historia social",
+  medical_history: "Antecedentes",
+  medications: "Medicamentos",
+  allergies: "Alergias",
+  social_history: "Historia social",
 };
 
 const CATEGORY_ORDER = Object.keys(CATEGORY_LABELS);
 
 const PATIENT_INFO_LABELS: Record<string, string> = {
-  age:            "Edad",
-  sex:            "Sexo",
-  edad:           "Edad",
-  sexo:           "Sexo",
-  weight:         "Peso",
-  height:         "Talla",
-  occupation:     "Ocupación",
-  medical_history:"Antecedentes",
+  age: "Edad",
+  sex: "Sexo",
+  edad: "Edad",
+  sexo: "Sexo",
+  weight: "Peso",
+  height: "Talla",
+  occupation: "Ocupación",
+  medical_history: "Antecedentes",
 };
-
-function getScoreColor(score: number): string {
-  if (score >= 0.7) return "#16a34a";
-  if (score >= 0.4) return "#d97706";
-  return "#6b7280";
-}
-
-function getScoreBg(score: number): string {
-  if (score >= 0.7) return "#dcfce7";
-  if (score >= 0.4) return "#fef3c7";
-  return "#f3f4f6";
-}
-
-function getScoreBorder(score: number): string {
-  if (score >= 0.7) return "#bbf7d0";
-  if (score >= 0.4) return "#fde68a";
-  return "#e5e7eb";
-}
 
 function formatPatientValue(key: string, value: any): string {
   if (key === "sex" || key === "sexo") {
@@ -67,97 +55,114 @@ function formatPatientValue(key: string, value: any): string {
   return String(value);
 }
 
+function getScoreVariant(score: number): "success" | "warning" | "secondary" {
+  if (score >= 0.7) return "success";
+  if (score >= 0.4) return "warning";
+  return "secondary";
+}
+
 function Sparkline({ history }: { history: ConfidenceSnapshot[] }) {
-  const W = 252;
+  const W = 240;
   const H = 52;
-  const PAD = { top: 6, right: 20, bottom: 14, left: 22 };
+  const PAD = { top: 6, right: 18, bottom: 14, left: 20 };
   const innerW = W - PAD.left - PAD.right;
   const innerH = H - PAD.top - PAD.bottom;
 
   if (history.length < 2) {
     return (
-      <div style={{
-        height: H,
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        color: "#9ca3af",
-        fontSize: 11,
-        fontStyle: "italic"
-      }}>
+      <p className="text-[11px] text-muted-foreground italic text-center py-3">
         Esperando más turnos…
-      </div>
+      </p>
     );
   }
 
   const xStep = innerW / Math.max(history.length - 1, 1);
   const toX = (i: number) => PAD.left + i * xStep;
   const toY = (score: number) => PAD.top + innerH - score * innerH;
-
   const points = history.map((h, i) => `${toX(i)},${toY(h.score)}`).join(" ");
   const threshold70Y = toY(0.7);
 
   return (
-    <svg width={W} height={H} style={{ overflow: "visible", display: "block" }}>
-      {/* Grid lines */}
-      {[0, 0.5, 1].map(v => (
+    <svg width={W} height={H} className="overflow-visible block">
+      <defs>
+        <linearGradient id="sparkGradFill" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stopColor="#3b82f6" stopOpacity="0.25" />
+          <stop offset="100%" stopColor="#3b82f6" stopOpacity="0" />
+        </linearGradient>
+      </defs>
+
+      {[0, 0.5, 1].map((v) => (
         <line
           key={v}
-          x1={PAD.left} y1={toY(v)}
-          x2={PAD.left + innerW} y2={toY(v)}
-          stroke="#f3f4f6" strokeWidth={1}
+          x1={PAD.left}
+          y1={toY(v)}
+          x2={PAD.left + innerW}
+          y2={toY(v)}
+          stroke="hsl(240 4% 20%)"
+          strokeWidth={1}
         />
       ))}
 
-      {/* Y-axis labels */}
-      {[0, 0.5, 1].map(v => (
-        <text key={v} x={PAD.left - 4} y={toY(v) + 3} textAnchor="end" fontSize={9} fill="#9ca3af">
+      {[0, 0.5, 1].map((v) => (
+        <text
+          key={v}
+          x={PAD.left - 4}
+          y={toY(v) + 3}
+          textAnchor="end"
+          fontSize={9}
+          fill="hsl(240 5% 55%)"
+        >
           {Math.round(v * 100)}
         </text>
       ))}
 
-      {/* 70% threshold dashed line */}
       <line
-        x1={PAD.left} y1={threshold70Y}
-        x2={PAD.left + innerW} y2={threshold70Y}
-        stroke="#16a34a" strokeWidth={1}
-        strokeDasharray="3 3" opacity={0.5}
+        x1={PAD.left}
+        y1={threshold70Y}
+        x2={PAD.left + innerW}
+        y2={threshold70Y}
+        stroke="#22c55e"
+        strokeWidth={1}
+        strokeDasharray="3 3"
+        opacity={0.5}
       />
-      <text x={PAD.left + innerW + 2} y={threshold70Y + 3} fontSize={8} fill="#16a34a" opacity={0.7}>
+      <text
+        x={PAD.left + innerW + 2}
+        y={threshold70Y + 3}
+        fontSize={8}
+        fill="#22c55e"
+        opacity={0.7}
+      >
         70%
       </text>
 
-      {/* Gradient fill */}
-      <defs>
-        <linearGradient id="sparkGradFill" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stopColor="#3b82f6" stopOpacity="0.18" />
-          <stop offset="100%" stopColor="#3b82f6" stopOpacity="0" />
-        </linearGradient>
-      </defs>
       <polygon
         points={[
           `${toX(0)},${toY(0)}`,
           ...history.map((h, i) => `${toX(i)},${toY(h.score)}`),
-          `${toX(history.length - 1)},${toY(0)}`
+          `${toX(history.length - 1)},${toY(0)}`,
         ].join(" ")}
         fill="url(#sparkGradFill)"
       />
 
-      {/* Line */}
       <polyline
         points={points}
-        fill="none" stroke="#3b82f6" strokeWidth={1.5}
-        strokeLinejoin="round" strokeLinecap="round"
+        fill="none"
+        stroke="#3b82f6"
+        strokeWidth={1.5}
+        strokeLinejoin="round"
+        strokeLinecap="round"
       />
 
-      {/* Dots */}
       {history.map((h, i) => (
         <circle
           key={i}
-          cx={toX(i)} cy={toY(h.score)}
+          cx={toX(i)}
+          cy={toY(h.score)}
           r={i === history.length - 1 ? 3 : 2}
-          fill={i === history.length - 1 ? "#3b82f6" : "white"}
-          stroke="#3b82f6" strokeWidth={1.5}
+          fill={i === history.length - 1 ? "#3b82f6" : "hsl(240 6% 10%)"}
+          stroke="#3b82f6"
+          strokeWidth={1.5}
         />
       ))}
     </svg>
@@ -169,121 +174,90 @@ export default function ConfidenceEvolutionPanel({ history }: Props) {
 
   const latest = history[history.length - 1];
   const scorePercent = Math.round(latest.score * 100);
-  const scoreColor = getScoreColor(latest.score);
-  const scoreBg = getScoreBg(latest.score);
-  const scoreBorder = getScoreBorder(latest.score);
-  const coveredCount = CATEGORY_ORDER.filter(k => latest.categories[k]).length;
+  const coveredCount = CATEGORY_ORDER.filter((k) => latest.categories[k]).length;
+  const scoreVariant = getScoreVariant(latest.score);
 
   const patientEntries = Object.entries(latest.patientInfo ?? {}).filter(
-    ([, v]) => v !== null && v !== undefined && v !== "" && !(Array.isArray(v) && v.length === 0)
+    ([, v]) =>
+      v !== null &&
+      v !== undefined &&
+      v !== "" &&
+      !(Array.isArray(v) && v.length === 0)
   );
 
   return (
-    <div style={{
-      width: 300,
-      flexShrink: 0,
-      background: "white",
-      borderLeft: "1px solid #e5e7eb",
-      display: "flex",
-      flexDirection: "column",
-      overflowY: "auto",
-      height: "100%",
-    }}>
-      {/* Panel header */}
-      <div style={{
-        padding: "12px 16px 10px",
-        borderBottom: "1px solid #f3f4f6",
-        background: "#f9fafb",
-        position: "sticky",
-        top: 0,
-        zIndex: 1,
-      }}>
-        <p style={{ margin: 0, fontSize: 11, fontWeight: 700, color: "#6b7280", letterSpacing: "0.08em", textTransform: "uppercase" }}>
+    <div className="w-72 shrink-0 border-l border-border bg-card flex flex-col overflow-y-auto">
+      {/* Header */}
+      <div className="sticky top-0 z-10 bg-card border-b border-border px-4 py-3">
+        <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">
           Razonamiento en tiempo real
         </p>
-        <p style={{ margin: "2px 0 0", fontSize: 12, color: "#9ca3af" }}>
+        <p className="text-xs text-muted-foreground mt-0.5">
           Turno {latest.turn} · {coveredCount}/{CATEGORY_ORDER.length} categorías
         </p>
       </div>
 
-      <div style={{ padding: "14px 16px", display: "flex", flexDirection: "column", gap: 14 }}>
-
+      <div className="flex flex-col gap-4 p-4">
         {/* Confidence score */}
-        <div style={{
-          background: scoreBg,
-          border: `1px solid ${scoreBorder}`,
-          borderRadius: 10,
-          padding: "10px 14px",
-          display: "flex",
-          alignItems: "center",
-          gap: 12,
-          transition: "background 0.4s ease, border-color 0.4s ease"
-        }}>
-          <div style={{ flex: 1 }}>
-            <p style={{ margin: 0, fontSize: 11, color: scoreColor, fontWeight: 600 }}>
-              Confianza diagnóstica
-            </p>
-            <div style={{ marginTop: 6, height: 5, background: "rgba(0,0,0,0.08)", borderRadius: 3, overflow: "hidden" }}>
-              <div style={{
-                height: "100%",
-                width: `${scorePercent}%`,
-                background: scoreColor,
-                borderRadius: 3,
-                transition: "width 0.5s ease",
-              }} />
-            </div>
-            {latest.score >= 0.7 && (
-              <p style={{ margin: "4px 0 0", fontSize: 10, color: scoreColor }}>
-                Listo para diagnóstico
-              </p>
+        <div
+          className={cn(
+            "rounded-lg border p-3 transition-colors",
+            scoreVariant === "success"
+              ? "bg-emerald-500/10 border-emerald-500/20"
+              : scoreVariant === "warning"
+              ? "bg-amber-500/10 border-amber-500/20"
+              : "bg-secondary border-border"
+          )}
+        >
+          <div className="flex items-center justify-between mb-2">
+            <p className="text-xs font-medium text-muted-foreground">Confianza diagnóstica</p>
+            <span
+              className={cn(
+                "text-2xl font-bold leading-none",
+                scoreVariant === "success"
+                  ? "text-emerald-400"
+                  : scoreVariant === "warning"
+                  ? "text-amber-400"
+                  : "text-muted-foreground"
+              )}
+            >
+              {scorePercent}%
+            </span>
+          </div>
+          <Progress
+            value={scorePercent}
+            className={cn(
+              "h-1.5",
+              scoreVariant === "success"
+                ? "[&>div]:bg-emerald-500"
+                : scoreVariant === "warning"
+                ? "[&>div]:bg-amber-500"
+                : ""
             )}
-          </div>
-          <div style={{
-            fontSize: 26,
-            fontWeight: 800,
-            color: scoreColor,
-            lineHeight: 1,
-            minWidth: 44,
-            textAlign: "right",
-            transition: "color 0.4s ease"
-          }}>
-            {scorePercent}%
-          </div>
+          />
+          {latest.score >= 0.7 && (
+            <p className="text-[10px] text-emerald-400 mt-1.5 font-medium">
+              Listo para diagnóstico
+            </p>
+          )}
         </div>
 
-        {/* Agent reasoning card — the most prominent section */}
+        {/* Agent reasoning */}
         {latest.agentReasoning ? (
-          <div style={{
-            background: "#f0f9ff",
-            border: "1px solid #bae6fd",
-            borderRadius: 10,
-            padding: "10px 12px",
-          }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 6 }}>
-              <span style={{ fontSize: 14 }}>🧠</span>
-              <p style={{ margin: 0, fontSize: 11, fontWeight: 700, color: "#0369a1", letterSpacing: "0.05em", textTransform: "uppercase" }}>
+          <div className="rounded-lg border border-blue-500/20 bg-blue-500/5 p-3">
+            <div className="flex items-center gap-1.5 mb-2">
+              <Brain className="w-3.5 h-3.5 text-blue-400" />
+              <p className="text-[10px] font-bold text-blue-400 uppercase tracking-wider">
                 Pensamiento clínico
               </p>
             </div>
-            <p style={{
-              margin: 0,
-              fontSize: 12,
-              color: "#0c4a6e",
-              lineHeight: 1.55,
-              fontStyle: "italic",
-            }}>
+            <p className="text-[11px] text-blue-200/80 leading-relaxed italic">
               {latest.agentReasoning}
             </p>
           </div>
         ) : (
-          <div style={{
-            background: "#f9fafb",
-            border: "1px dashed #d1d5db",
-            borderRadius: 10,
-            padding: "10px 12px",
-            textAlign: "center",
-          }}>
-            <p style={{ margin: 0, fontSize: 11, color: "#9ca3af", fontStyle: "italic" }}>
+          <div className="rounded-lg border border-dashed border-border p-3 text-center">
+            <p className="text-[11px] text-muted-foreground italic">
               El razonamiento aparecerá en el siguiente turno…
             </p>
           </div>
@@ -292,24 +266,22 @@ export default function ConfidenceEvolutionPanel({ history }: Props) {
         {/* Patient demographics */}
         {patientEntries.length > 0 && (
           <div>
-            <p style={{ margin: "0 0 8px", fontSize: 11, fontWeight: 700, color: "#374151", letterSpacing: "0.05em", textTransform: "uppercase" }}>
+            <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-2 flex items-center gap-1.5">
+              <User className="w-3 h-3" />
               Datos del paciente
             </p>
-            <div style={{ display: "flex", flexWrap: "wrap", gap: 5 }}>
+            <div className="flex flex-wrap gap-1.5">
               {patientEntries.map(([key, value]) => {
                 const label = PATIENT_INFO_LABELS[key] ?? key;
                 return (
-                  <span key={key} style={{
-                    padding: "3px 8px",
-                    borderRadius: 10,
-                    background: "#f3f4f6",
-                    color: "#374151",
-                    fontSize: 11,
-                    fontWeight: 500,
-                    border: "1px solid #e5e7eb"
-                  }}>
-                    <span style={{ color: "#9ca3af" }}>{label}: </span>
-                    {formatPatientValue(key, value)}
+                  <span
+                    key={key}
+                    className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-secondary border border-border text-[11px]"
+                  >
+                    <span className="text-muted-foreground">{label}:</span>
+                    <span className="text-foreground font-medium">
+                      {formatPatientValue(key, value)}
+                    </span>
                   </span>
                 );
               })}
@@ -317,58 +289,29 @@ export default function ConfidenceEvolutionPanel({ history }: Props) {
           </div>
         )}
 
-        {/* Category bars */}
+        <Separator />
+
+        {/* Category checklist */}
         <div>
-          <p style={{ margin: "0 0 8px", fontSize: 11, fontWeight: 700, color: "#374151", letterSpacing: "0.05em", textTransform: "uppercase" }}>
+          <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-2.5">
             Categorías
           </p>
-          <div style={{ display: "flex", flexDirection: "column", gap: 5 }}>
-            {CATEGORY_ORDER.map(key => {
+          <div className="space-y-2">
+            {CATEGORY_ORDER.map((key) => {
               const covered = !!latest.categories[key];
               return (
-                <div key={key} style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                  <div style={{
-                    width: 14,
-                    height: 14,
-                    borderRadius: 3,
-                    border: covered ? "none" : "1.5px solid #d1d5db",
-                    background: covered ? "#16a34a" : "transparent",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    flexShrink: 0,
-                    transition: "background 0.3s ease, border 0.3s ease"
-                  }}>
-                    {covered && (
-                      <svg width="8" height="8" viewBox="0 0 8 8" fill="none">
-                        <path d="M1.5 4L3 5.5L6.5 2" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-                      </svg>
+                <div key={key} className="flex items-center gap-2">
+                  {covered ? (
+                    <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400 shrink-0 transition-colors" />
+                  ) : (
+                    <Circle className="w-3.5 h-3.5 text-muted-foreground/40 shrink-0" />
+                  )}
+                  <span
+                    className={cn(
+                      "text-[11px] leading-none transition-colors",
+                      covered ? "text-foreground font-medium" : "text-muted-foreground"
                     )}
-                  </div>
-                  <div style={{ flex: 1 }}>
-                    <div style={{
-                      height: 3,
-                      background: "#f3f4f6",
-                      borderRadius: 2,
-                      overflow: "hidden"
-                    }}>
-                      <div style={{
-                        height: "100%",
-                        width: covered ? "100%" : "0%",
-                        background: "#16a34a",
-                        borderRadius: 2,
-                        transition: "width 0.4s ease"
-                      }} />
-                    </div>
-                  </div>
-                  <span style={{
-                    fontSize: 11,
-                    color: covered ? "#111827" : "#9ca3af",
-                    fontWeight: covered ? 500 : 400,
-                    transition: "color 0.3s ease",
-                    minWidth: 140,
-                    textAlign: "left",
-                  }}>
+                  >
                     {CATEGORY_LABELS[key]}
                   </span>
                 </div>
@@ -377,9 +320,12 @@ export default function ConfidenceEvolutionPanel({ history }: Props) {
           </div>
         </div>
 
+        <Separator />
+
         {/* Sparkline */}
         <div>
-          <p style={{ margin: "0 0 6px", fontSize: 11, fontWeight: 700, color: "#374151", letterSpacing: "0.05em", textTransform: "uppercase" }}>
+          <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-2 flex items-center gap-1.5">
+            <TrendingUp className="w-3 h-3" />
             Evolución
           </p>
           <Sparkline history={history} />
@@ -388,27 +334,18 @@ export default function ConfidenceEvolutionPanel({ history }: Props) {
         {/* Symptom chips */}
         {latest.symptoms.length > 0 && (
           <div>
-            <p style={{ margin: "0 0 8px", fontSize: 11, fontWeight: 700, color: "#374151", letterSpacing: "0.05em", textTransform: "uppercase" }}>
+            <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-2">
               Síntomas detectados
             </p>
-            <div style={{ display: "flex", flexWrap: "wrap", gap: 4 }}>
+            <div className="flex flex-wrap gap-1.5">
               {latest.symptoms.map((symptom, i) => (
-                <span key={i} style={{
-                  padding: "2px 8px",
-                  borderRadius: 10,
-                  background: "#eff6ff",
-                  color: "#1d4ed8",
-                  fontSize: 11,
-                  fontWeight: 500,
-                  border: "1px solid #bfdbfe"
-                }}>
+                <Badge key={i} variant="info" className="text-[10px] py-0">
                   {symptom}
-                </span>
+                </Badge>
               ))}
             </div>
           </div>
         )}
-
       </div>
     </div>
   );

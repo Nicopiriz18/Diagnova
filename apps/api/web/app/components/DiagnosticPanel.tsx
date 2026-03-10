@@ -1,4 +1,27 @@
-import { useState } from 'react';
+import { useState } from "react";
+import {
+  ClipboardList,
+  Target,
+  AlertTriangle,
+  CheckSquare,
+  FileText,
+  HelpCircle,
+  ShieldAlert,
+  ChevronDown,
+  ChevronUp,
+  Dna,
+  User,
+  TrendingUp,
+  CheckCircle,
+  XCircle,
+  FlaskConical,
+  Pill,
+  BarChart3,
+} from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { Progress } from "@/components/ui/progress";
+import { Separator } from "@/components/ui/separator";
+import { cn } from "@/lib/utils";
 
 interface DifferentialDx {
   name: string;
@@ -20,17 +43,112 @@ interface DiagnosticPanelProps {
   assessment: any;
 }
 
-const urgencyColors = {
-  immediate: "#dc2626",
-  urgent: "#ea580c",
-  routine: "#16a34a"
+const urgencyConfig = {
+  immediate: { label: "INMEDIATO", variant: "danger" as const },
+  urgent: { label: "URGENTE", variant: "warning" as const },
+  routine: { label: "RUTINA", variant: "success" as const },
 };
 
-const severityColors = {
-  critical: "#dc2626",
-  warning: "#f59e0b",
-  info: "#3b82f6"
+const severityConfig = {
+  critical: {
+    label: "CRÍTICO",
+    variant: "danger" as const,
+    border: "border-l-red-500",
+    bg: "bg-red-500/5",
+  },
+  warning: {
+    label: "ADVERTENCIA",
+    variant: "warning" as const,
+    border: "border-l-amber-500",
+    bg: "bg-amber-500/5",
+  },
+  info: {
+    label: "INFO",
+    variant: "info" as const,
+    border: "border-l-blue-500",
+    bg: "bg-blue-500/5",
+  },
 };
+
+const priorityConfig = {
+  immediate: {
+    label: "INMEDIATO",
+    border: "border-l-red-500",
+    bg: "bg-red-500/5",
+  },
+  urgent: {
+    label: "URGENTE",
+    border: "border-l-amber-500",
+    bg: "bg-amber-500/5",
+  },
+  routine: {
+    label: "RUTINA",
+    border: "border-l-emerald-500",
+    bg: "bg-emerald-500/5",
+  },
+};
+
+function DetailList({
+  icon: Icon,
+  title,
+  items,
+  colorClass,
+}: {
+  icon: React.ElementType;
+  title: string;
+  items: string[];
+  colorClass: string;
+}) {
+  if (!items || items.length === 0) return null;
+  return (
+    <div>
+      <h5 className={cn("text-xs font-semibold flex items-center gap-1.5 mb-2", colorClass)}>
+        <Icon className="w-3.5 h-3.5" />
+        {title}
+      </h5>
+      <ul className="space-y-1 pl-4">
+        {items.map((item, i) => (
+          <li key={i} className="text-xs text-muted-foreground leading-relaxed list-disc">
+            {item}
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+
+function SectionHeader({
+  icon: Icon,
+  title,
+  section,
+  expanded,
+  onToggle,
+  iconColorClass,
+}: {
+  icon: React.ElementType;
+  title: string;
+  section: string;
+  expanded: boolean;
+  onToggle: () => void;
+  iconColorClass?: string;
+}) {
+  return (
+    <button
+      onClick={onToggle}
+      className="w-full flex items-center justify-between px-5 py-4 text-left hover:bg-accent/40 transition-colors"
+    >
+      <div className="flex items-center gap-2.5">
+        <Icon className={cn("w-4 h-4", iconColorClass ?? "text-muted-foreground")} />
+        <span className="text-sm font-semibold text-foreground">{title}</span>
+      </div>
+      {expanded ? (
+        <ChevronUp className="w-4 h-4 text-muted-foreground" />
+      ) : (
+        <ChevronDown className="w-4 h-4 text-muted-foreground" />
+      )}
+    </button>
+  );
+}
 
 export default function DiagnosticPanel({ assessment }: DiagnosticPanelProps) {
   const [expandedSections, setExpandedSections] = useState<Record<string, boolean>>({
@@ -38,279 +156,170 @@ export default function DiagnosticPanel({ assessment }: DiagnosticPanelProps) {
     redFlags: true,
     actionPlan: false,
     soap: false,
-    missing: false
+    missing: false,
   });
-
-  // State for expanded details in each differential diagnosis
   const [expandedDetails, setExpandedDetails] = useState<Record<number, boolean>>({});
 
-  const toggleSection = (section: string) => {
-    setExpandedSections(prev => ({ ...prev, [section]: !prev[section] }));
-  };
+  const toggleSection = (section: string) =>
+    setExpandedSections((prev) => ({ ...prev, [section]: !prev[section] }));
 
-  const toggleDetails = (index: number) => {
-    setExpandedDetails(prev => ({ ...prev, [index]: !prev[index] }));
-  };
-
-  const SectionHeader = ({ title, icon, section }: { title: string; icon: string; section: string }) => (
-    <div
-      onClick={() => toggleSection(section)}
-      style={{
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        cursor: 'pointer',
-        padding: '16px 20px',
-        background: '#f9fafb',
-        borderRadius: '12px 12px 0 0',
-        borderBottom: expandedSections[section] ? '1px solid #e5e7eb' : 'none'
-      }}
-    >
-      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-        <span style={{ fontSize: 20 }}>{icon}</span>
-        <h3 style={{ fontSize: 18, fontWeight: 700, color: '#111827', margin: 0 }}>{title}</h3>
-      </div>
-      <span style={{ fontSize: 20, transition: 'transform 0.2s', transform: expandedSections[section] ? 'rotate(180deg)' : 'rotate(0deg)' }}>
-        ▼
-      </span>
-    </div>
-  );
+  const toggleDetails = (index: number) =>
+    setExpandedDetails((prev) => ({ ...prev, [index]: !prev[index] }));
 
   return (
-    <div style={{
-      background: '#fffbeb',
-      borderRadius: 16,
-      padding: 24,
-      marginTop: 24,
-      border: '2px solid #fbbf24',
-      boxShadow: '0 4px 6px rgba(0,0,0,0.1)'
-    }}>
-      <div style={{
-        display: 'flex',
-        alignItems: 'center',
-        gap: 12,
-        marginBottom: 20
-      }}>
-        <div style={{
-          width: 48,
-          height: 48,
-          borderRadius: '50%',
-          background: '#fbbf24',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          fontSize: 24
-        }}>
-          📋
+    <div className="rounded-xl border border-amber-500/30 bg-amber-500/5 p-5 mt-4 space-y-4 animate-fade-in">
+      {/* Header */}
+      <div className="flex items-center gap-3">
+        <div className="flex items-center justify-center w-10 h-10 rounded-full bg-amber-500/15 border border-amber-500/30 shrink-0">
+          <ClipboardList className="w-5 h-5 text-amber-400" />
         </div>
         <div>
-          <h2 style={{ fontSize: 24, fontWeight: 700, color: '#78350f', margin: 0 }}>
+          <h2 className="text-base font-semibold text-foreground leading-none">
             Evaluación Diagnóstica Completa
           </h2>
-          <p style={{ fontSize: 14, color: '#92400e', margin: 0 }}>
+          <p className="text-xs text-muted-foreground mt-0.5">
             Análisis generado por el sistema de agentes
           </p>
         </div>
       </div>
 
-      {/* Resumen del Paciente */}
-      <div style={{ 
-        background: 'white', 
-        borderRadius: 12, 
-        padding: 20, 
-        marginBottom: 16,
-        border: '1px solid #e5e7eb'
-      }}>
-        <h3 style={{ fontSize: 16, fontWeight: 700, color: '#2563eb', marginBottom: 8 }}>
-          📝 Resumen del Paciente
-        </h3>
-        <p style={{ color: '#374151', lineHeight: 1.6, margin: 0 }}>{assessment.patient_summary}</p>
-      </div>
+      {/* Patient Summary */}
+      {assessment.patient_summary && (
+        <div className="rounded-lg border border-border bg-card p-4">
+          <h3 className="text-xs font-semibold text-primary flex items-center gap-1.5 mb-2">
+            <User className="w-3.5 h-3.5" />
+            Resumen del Paciente
+          </h3>
+          <p className="text-sm text-muted-foreground leading-relaxed">{assessment.patient_summary}</p>
+        </div>
+      )}
 
-      {/* Diagnósticos Diferenciales */}
+      {/* Differentials */}
       {assessment.differentials?.length > 0 && (
-        <div style={{ background: 'white', borderRadius: 12, marginBottom: 16, overflow: 'hidden', border: '1px solid #e5e7eb' }}>
-          <SectionHeader title="Diagnósticos Diferenciales" icon="🎯" section="differentials" />
+        <div className="rounded-lg border border-border bg-card overflow-hidden">
+          <SectionHeader
+            icon={Target}
+            title="Diagnósticos Diferenciales"
+            section="differentials"
+            expanded={expandedSections.differentials}
+            onToggle={() => toggleSection("differentials")}
+            iconColorClass="text-primary"
+          />
           {expandedSections.differentials && (
-            <div style={{ padding: 20 }}>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-                {assessment.differentials.map((dx: DifferentialDx, idx: number) => (
-                  <div key={idx} style={{ 
-                    padding: 16, 
-                    border: '1px solid #e5e7eb', 
-                    borderRadius: 8,
-                    background: '#f9fafb'
-                  }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
-                      <h4 style={{ fontSize: 16, fontWeight: 600, color: '#111827', margin: 0, flex: 1 }}>
+            <div className="p-4 border-t border-border space-y-3">
+              {assessment.differentials.map((dx: DifferentialDx, idx: number) => (
+                <div
+                  key={idx}
+                  className="rounded-lg border border-border bg-background/60 overflow-hidden"
+                >
+                  {/* Dx header */}
+                  <div className="flex items-start justify-between gap-3 p-4">
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-semibold text-foreground">
                         {idx + 1}. {dx.name}
-                      </h4>
-                      <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-                        <span style={{ 
-                          fontWeight: 700, 
-                          color: urgencyColors[dx.urgency as keyof typeof urgencyColors],
-                          padding: "4px 8px",
-                          background: dx.urgency === "immediate" ? "#fef2f2" : dx.urgency === "urgent" ? "#fff7ed" : "#f0fdf4",
-                          borderRadius: 6,
-                          textTransform: "uppercase",
-                          fontSize: 11
-                        }}>
-                          {dx.urgency === "immediate" ? "INMEDIATO" : dx.urgency === "urgent" ? "URGENTE" : "RUTINA"}
-                        </span>
-                        <span style={{ fontSize: 18, fontWeight: 700, color: "#2563eb" }}>{dx.likelihood}%</span>
-                      </div>
+                      </p>
+                      <p className="text-xs text-muted-foreground leading-relaxed mt-1">
+                        {dx.reasoning}
+                      </p>
                     </div>
-                    <p style={{ fontSize: 14, color: '#6b7280', lineHeight: 1.6, margin: 0, marginBottom: 12 }}>{dx.reasoning}</p>
-                    
-                    {/* Expandable Details Button */}
-                    <button
-                      onClick={() => toggleDetails(idx)}
-                      style={{
-                        width: '100%',
-                        padding: '8px 12px',
-                        background: expandedDetails[idx] ? '#e0e7ff' : '#f3f4f6',
-                        border: '1px solid #d1d5db',
-                        borderRadius: 6,
-                        cursor: 'pointer',
-                        fontSize: 13,
-                        fontWeight: 600,
-                        color: expandedDetails[idx] ? '#3730a3' : '#4b5563',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        gap: 6,
-                        transition: 'all 0.2s'
-                      }}
-                    >
-                      {expandedDetails[idx] ? '▲ Ocultar detalles' : '▼ Ver detalles completos'}
-                    </button>
-
-                    {/* Expanded Details */}
-                    {expandedDetails[idx] && (
-                      <div style={{ marginTop: 16, padding: 16, background: 'white', borderRadius: 8, border: '1px solid #e5e7eb' }}>
-                        
-                        {/* Causas */}
-                        {(dx.general_causes && dx.general_causes.length > 0) && (
-                          <div style={{ marginBottom: 16 }}>
-                            <h5 style={{ fontSize: 13, fontWeight: 700, color: '#7c3aed', marginBottom: 8, display: 'flex', alignItems: 'center', gap: 6 }}>
-                              🧬 Causas Generales
-                            </h5>
-                            <ul style={{ margin: 0, paddingLeft: 20, fontSize: 13, color: '#374151', lineHeight: 1.6 }}>
-                              {dx.general_causes.map((cause, i) => (
-                                <li key={i} style={{ marginBottom: 4 }}>{cause}</li>
-                              ))}
-                            </ul>
-                          </div>
-                        )}
-
-                        {/* Patient Specific Factors */}
-                        {(dx.patient_specific_factors && dx.patient_specific_factors.length > 0) && (
-                          <div style={{ marginBottom: 16 }}>
-                            <h5 style={{ fontSize: 13, fontWeight: 700, color: '#059669', marginBottom: 8, display: 'flex', alignItems: 'center', gap: 6 }}>
-                              👤 Factores Específicos del Paciente
-                            </h5>
-                            <ul style={{ margin: 0, paddingLeft: 20, fontSize: 13, color: '#374151', lineHeight: 1.6 }}>
-                              {dx.patient_specific_factors.map((factor, i) => (
-                                <li key={i} style={{ marginBottom: 4 }}>{factor}</li>
-                              ))}
-                            </ul>
-                          </div>
-                        )}
-
-                        {/* Risk Factors */}
-                        {(dx.risk_factors && dx.risk_factors.length > 0) && (
-                          <div style={{ marginBottom: 16 }}>
-                            <h5 style={{ fontSize: 13, fontWeight: 700, color: '#dc2626', marginBottom: 8, display: 'flex', alignItems: 'center', gap: 6 }}>
-                              ⚠️ Factores de Riesgo
-                            </h5>
-                            <ul style={{ margin: 0, paddingLeft: 20, fontSize: 13, color: '#374151', lineHeight: 1.6 }}>
-                              {dx.risk_factors.map((risk, i) => (
-                                <li key={i} style={{ marginBottom: 4 }}>{risk}</li>
-                              ))}
-                            </ul>
-                          </div>
-                        )}
-
-                        {/* Supporting Findings */}
-                        {(dx.supporting_findings && dx.supporting_findings.length > 0) && (
-                          <div style={{ marginBottom: 16 }}>
-                            <h5 style={{ fontSize: 13, fontWeight: 700, color: '#16a34a', marginBottom: 8, display: 'flex', alignItems: 'center', gap: 6 }}>
-                              ✓ Hallazgos que Apoyan
-                            </h5>
-                            <ul style={{ margin: 0, paddingLeft: 20, fontSize: 13, color: '#374151', lineHeight: 1.6 }}>
-                              {dx.supporting_findings.map((finding, i) => (
-                                <li key={i} style={{ marginBottom: 4, color: '#166534' }}>{finding}</li>
-                              ))}
-                            </ul>
-                          </div>
-                        )}
-
-                        {/* Contradicting Findings */}
-                        {(dx.contradicting_findings && dx.contradicting_findings.length > 0) && (
-                          <div style={{ marginBottom: 16 }}>
-                            <h5 style={{ fontSize: 13, fontWeight: 700, color: '#ea580c', marginBottom: 8, display: 'flex', alignItems: 'center', gap: 6 }}>
-                              ✗ Hallazgos que Contradicen
-                            </h5>
-                            <ul style={{ margin: 0, paddingLeft: 20, fontSize: 13, color: '#374151', lineHeight: 1.6 }}>
-                              {dx.contradicting_findings.map((finding, i) => (
-                                <li key={i} style={{ marginBottom: 4, color: '#9a3412' }}>{finding}</li>
-                              ))}
-                            </ul>
-                          </div>
-                        )}
-
-                        {/* Prognosis */}
-                        {dx.prognosis && (
-                          <div style={{ marginBottom: 16 }}>
-                            <h5 style={{ fontSize: 13, fontWeight: 700, color: '#0891b2', marginBottom: 8, display: 'flex', alignItems: 'center', gap: 6 }}>
-                              📊 Pronóstico
-                            </h5>
-                            <p style={{ margin: 0, fontSize: 13, color: '#374151', lineHeight: 1.6 }}>{dx.prognosis}</p>
-                          </div>
-                        )}
-
-                        {/* Complications */}
-                        {(dx.complications && dx.complications.length > 0) && (
-                          <div style={{ marginBottom: 16 }}>
-                            <h5 style={{ fontSize: 13, fontWeight: 700, color: '#dc2626', marginBottom: 8, display: 'flex', alignItems: 'center', gap: 6 }}>
-                              🚨 Complicaciones Potenciales
-                            </h5>
-                            <ul style={{ margin: 0, paddingLeft: 20, fontSize: 13, color: '#374151', lineHeight: 1.6 }}>
-                              {dx.complications.map((comp, i) => (
-                                <li key={i} style={{ marginBottom: 4, color: '#7f1d1d' }}>{comp}</li>
-                              ))}
-                            </ul>
-                          </div>
-                        )}
-
-                        {/* Recommended Tests */}
-                        {(dx.recommended_tests && dx.recommended_tests.length > 0) && (
-                          <div style={{ marginBottom: 16 }}>
-                            <h5 style={{ fontSize: 13, fontWeight: 700, color: '#7c3aed', marginBottom: 8, display: 'flex', alignItems: 'center', gap: 6 }}>
-                              🔬 Exámenes Recomendados
-                            </h5>
-                            <ul style={{ margin: 0, paddingLeft: 20, fontSize: 13, color: '#374151', lineHeight: 1.6 }}>
-                              {dx.recommended_tests.map((test, i) => (
-                                <li key={i} style={{ marginBottom: 4 }}>{test}</li>
-                              ))}
-                            </ul>
-                          </div>
-                        )}
-
-                        {/* Treatment Summary */}
-                        {dx.treatment_summary && (
-                          <div>
-                            <h5 style={{ fontSize: 13, fontWeight: 700, color: '#059669', marginBottom: 8, display: 'flex', alignItems: 'center', gap: 6 }}>
-                              💊 Opciones de Tratamiento
-                            </h5>
-                            <p style={{ margin: 0, fontSize: 13, color: '#374151', lineHeight: 1.6 }}>{dx.treatment_summary}</p>
-                          </div>
-                        )}
-                      </div>
-                    )}
+                    <div className="flex flex-col items-end gap-1.5 shrink-0">
+                      <Badge variant={urgencyConfig[dx.urgency]?.variant ?? "secondary"} className="text-[10px]">
+                        {urgencyConfig[dx.urgency]?.label ?? dx.urgency}
+                      </Badge>
+                      <span className="text-sm font-bold text-primary">{dx.likelihood}%</span>
+                    </div>
                   </div>
-                ))}
-              </div>
+
+                  {/* Likelihood bar */}
+                  <div className="px-4 pb-3">
+                    <Progress value={dx.likelihood} className="h-1" />
+                  </div>
+
+                  {/* Toggle details */}
+                  <button
+                    onClick={() => toggleDetails(idx)}
+                    className="w-full flex items-center justify-center gap-1.5 px-4 py-2.5 border-t border-border text-xs font-medium text-muted-foreground hover:text-foreground hover:bg-accent/40 transition-colors"
+                  >
+                    {expandedDetails[idx] ? (
+                      <>
+                        <ChevronUp className="w-3.5 h-3.5" />
+                        Ocultar detalles
+                      </>
+                    ) : (
+                      <>
+                        <ChevronDown className="w-3.5 h-3.5" />
+                        Ver detalles completos
+                      </>
+                    )}
+                  </button>
+
+                  {/* Expanded details */}
+                  {expandedDetails[idx] && (
+                    <div className="p-4 border-t border-border space-y-4">
+                      <DetailList
+                        icon={Dna}
+                        title="Causas Generales"
+                        items={dx.general_causes ?? []}
+                        colorClass="text-violet-400"
+                      />
+                      <DetailList
+                        icon={User}
+                        title="Factores Específicos del Paciente"
+                        items={dx.patient_specific_factors ?? []}
+                        colorClass="text-emerald-400"
+                      />
+                      <DetailList
+                        icon={ShieldAlert}
+                        title="Factores de Riesgo"
+                        items={dx.risk_factors ?? []}
+                        colorClass="text-red-400"
+                      />
+                      <DetailList
+                        icon={CheckCircle}
+                        title="Hallazgos que Apoyan"
+                        items={dx.supporting_findings ?? []}
+                        colorClass="text-emerald-400"
+                      />
+                      <DetailList
+                        icon={XCircle}
+                        title="Hallazgos que Contradicen"
+                        items={dx.contradicting_findings ?? []}
+                        colorClass="text-orange-400"
+                      />
+                      {dx.prognosis && (
+                        <div>
+                          <h5 className="text-xs font-semibold text-cyan-400 flex items-center gap-1.5 mb-1.5">
+                            <BarChart3 className="w-3.5 h-3.5" />
+                            Pronóstico
+                          </h5>
+                          <p className="text-xs text-muted-foreground leading-relaxed">{dx.prognosis}</p>
+                        </div>
+                      )}
+                      <DetailList
+                        icon={AlertTriangle}
+                        title="Complicaciones Potenciales"
+                        items={dx.complications ?? []}
+                        colorClass="text-red-400"
+                      />
+                      <DetailList
+                        icon={FlaskConical}
+                        title="Exámenes Recomendados"
+                        items={dx.recommended_tests ?? []}
+                        colorClass="text-violet-400"
+                      />
+                      {dx.treatment_summary && (
+                        <div>
+                          <h5 className="text-xs font-semibold text-emerald-400 flex items-center gap-1.5 mb-1.5">
+                            <Pill className="w-3.5 h-3.5" />
+                            Opciones de Tratamiento
+                          </h5>
+                          <p className="text-xs text-muted-foreground leading-relaxed">{dx.treatment_summary}</p>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+              ))}
             </div>
           )}
         </div>
@@ -318,129 +327,144 @@ export default function DiagnosticPanel({ assessment }: DiagnosticPanelProps) {
 
       {/* Red Flags */}
       {assessment.red_flags?.length > 0 && (
-        <div style={{ background: 'white', borderRadius: 12, marginBottom: 16, overflow: 'hidden', border: '1px solid #e5e7eb' }}>
-          <SectionHeader title="Señales de Alerta" icon="🚨" section="redFlags" />
+        <div className="rounded-lg border border-border bg-card overflow-hidden">
+          <SectionHeader
+            icon={AlertTriangle}
+            title="Señales de Alerta"
+            section="redFlags"
+            expanded={expandedSections.redFlags}
+            onToggle={() => toggleSection("redFlags")}
+            iconColorClass="text-red-400"
+          />
           {expandedSections.redFlags && (
-            <div style={{ padding: 20 }}>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-                {assessment.red_flags.map((flag: any, idx: number) => (
-                  <div key={idx} style={{ 
-                    padding: 16, 
-                    borderLeft: `4px solid ${severityColors[flag.severity as keyof typeof severityColors]}`,
-                    background: flag.severity === "critical" ? "#fef2f2" : flag.severity === "warning" ? "#fffbeb" : "#eff6ff",
-                    borderRadius: 8
-                  }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6 }}>
-                      <span style={{ 
-                        fontSize: 11, 
-                        fontWeight: 700, 
-                        textTransform: "uppercase",
-                        color: severityColors[flag.severity as keyof typeof severityColors]
-                      }}>
-                        {flag.severity === "critical" ? "🔴 CRÍTICO" : flag.severity === "warning" ? "⚠️ ADVERTENCIA" : "ℹ️ INFO"}
-                      </span>
-                    </div>
-                    <p style={{ fontWeight: 600, color: "#111827", marginBottom: 6, margin: 0 }}>{flag.message}</p>
-                    <p style={{ fontSize: 14, color: "#6b7280", margin: 0 }}>{flag.why_it_matters}</p>
+            <div className="p-4 border-t border-border space-y-2.5">
+              {assessment.red_flags.map((flag: any, idx: number) => {
+                const cfg = severityConfig[flag.severity as keyof typeof severityConfig] ?? severityConfig.info;
+                return (
+                  <div
+                    key={idx}
+                    className={cn("border-l-2 rounded-r-lg px-4 py-3", cfg.border, cfg.bg)}
+                  >
+                    <Badge variant={cfg.variant} className="text-[10px] mb-2">
+                      {cfg.label}
+                    </Badge>
+                    <p className="text-sm font-medium text-foreground">{flag.message}</p>
+                    {flag.why_it_matters && (
+                      <p className="text-xs text-muted-foreground mt-1 leading-relaxed">
+                        {flag.why_it_matters}
+                      </p>
+                    )}
                   </div>
-                ))}
-              </div>
+                );
+              })}
             </div>
           )}
         </div>
       )}
 
-      {/* Plan de Acción */}
+      {/* Action Plan */}
       {assessment.action_plan?.length > 0 && (
-        <div style={{ background: 'white', borderRadius: 12, marginBottom: 16, overflow: 'hidden', border: '1px solid #e5e7eb' }}>
-          <SectionHeader title="Plan de Acción" icon="✅" section="actionPlan" />
+        <div className="rounded-lg border border-border bg-card overflow-hidden">
+          <SectionHeader
+            icon={CheckSquare}
+            title="Plan de Acción"
+            section="actionPlan"
+            expanded={expandedSections.actionPlan}
+            onToggle={() => toggleSection("actionPlan")}
+            iconColorClass="text-emerald-400"
+          />
           {expandedSections.actionPlan && (
-            <div style={{ padding: 20 }}>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-                {assessment.action_plan.map((item: any, idx: number) => (
-                  <div key={idx} style={{ 
-                    padding: 16, 
-                    borderLeft: `4px solid ${urgencyColors[item.priority as keyof typeof urgencyColors]}`,
-                    background: "#f9fafb",
-                    borderRadius: 8
-                  }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6 }}>
-                      <span style={{ 
-                        fontSize: 11, 
-                        fontWeight: 700, 
-                        textTransform: "uppercase",
-                        color: urgencyColors[item.priority as keyof typeof urgencyColors]
-                      }}>
-                        {item.priority === "immediate" ? "🔴 INMEDIATO" : item.priority === "urgent" ? "🟠 URGENTE" : "🟢 RUTINA"}
-                      </span>
-                    </div>
-                    <p style={{ fontWeight: 600, color: "#111827", marginBottom: 6, margin: 0 }}>{item.action}</p>
-                    <p style={{ fontSize: 14, color: "#6b7280", margin: 0 }}><em>Justificación:</em> {item.rationale}</p>
+            <div className="p-4 border-t border-border space-y-2.5">
+              {assessment.action_plan.map((item: any, idx: number) => {
+                const cfg = priorityConfig[item.priority as keyof typeof priorityConfig] ?? priorityConfig.routine;
+                return (
+                  <div
+                    key={idx}
+                    className={cn("border-l-2 rounded-r-lg px-4 py-3", cfg.border, cfg.bg)}
+                  >
+                    <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wide mb-1">
+                      {cfg.label}
+                    </p>
+                    <p className="text-sm font-medium text-foreground">{item.action}</p>
+                    {item.rationale && (
+                      <p className="text-xs text-muted-foreground mt-1 leading-relaxed">
+                        <em>Justificación:</em> {item.rationale}
+                      </p>
+                    )}
                   </div>
-                ))}
-              </div>
+                );
+              })}
             </div>
           )}
         </div>
       )}
 
-      {/* SOAP */}
+      {/* SOAP Note */}
       {assessment.soap && (
-        <div style={{ background: 'white', borderRadius: 12, marginBottom: 16, overflow: 'hidden', border: '1px solid #e5e7eb' }}>
-          <SectionHeader title="Nota SOAP" icon="📝" section="soap" />
+        <div className="rounded-lg border border-border bg-card overflow-hidden">
+          <SectionHeader
+            icon={FileText}
+            title="Nota SOAP"
+            section="soap"
+            expanded={expandedSections.soap}
+            onToggle={() => toggleSection("soap")}
+            iconColorClass="text-blue-400"
+          />
           {expandedSections.soap && (
-            <div style={{ padding: 20 }}>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-                <div>
-                  <h4 style={{ fontSize: 14, fontWeight: 700, color: '#2563eb', marginBottom: 6, margin: 0 }}>SUBJETIVO</h4>
-                  <p style={{ fontSize: 14, color: '#374151', lineHeight: 1.6, margin: 0 }}>{assessment.soap.subjective}</p>
-                </div>
-                <div>
-                  <h4 style={{ fontSize: 14, fontWeight: 700, color: '#2563eb', marginBottom: 6, margin: 0 }}>OBJETIVO</h4>
-                  <p style={{ fontSize: 14, color: '#374151', lineHeight: 1.6, margin: 0 }}>{assessment.soap.objective}</p>
-                </div>
-                <div>
-                  <h4 style={{ fontSize: 14, fontWeight: 700, color: '#2563eb', marginBottom: 6, margin: 0 }}>EVALUACIÓN</h4>
-                  <p style={{ fontSize: 14, color: '#374151', lineHeight: 1.6, margin: 0 }}>{assessment.soap.assessment}</p>
-                </div>
-                <div>
-                  <h4 style={{ fontSize: 14, fontWeight: 700, color: '#2563eb', marginBottom: 6, margin: 0 }}>PLAN</h4>
-                  <p style={{ fontSize: 14, color: '#374151', lineHeight: 1.6, margin: 0 }}>{assessment.soap.plan}</p>
-                </div>
-              </div>
+            <div className="p-4 border-t border-border space-y-4">
+              {(["subjective", "objective", "assessment", "plan"] as const).map((key) => {
+                const labels: Record<string, string> = {
+                  subjective: "SUBJETIVO",
+                  objective: "OBJETIVO",
+                  assessment: "EVALUACIÓN",
+                  plan: "PLAN",
+                };
+                return assessment.soap[key] ? (
+                  <div key={key}>
+                    <p className="text-xs font-bold text-primary mb-1.5">{labels[key]}</p>
+                    <p className="text-sm text-muted-foreground leading-relaxed">
+                      {assessment.soap[key]}
+                    </p>
+                    {key !== "plan" && <Separator className="mt-4" />}
+                  </div>
+                ) : null;
+              })}
             </div>
           )}
         </div>
       )}
 
-      {/* Preguntas Faltantes */}
+      {/* Missing info */}
       {assessment.missing_questions?.length > 0 && (
-        <div style={{ background: 'white', borderRadius: 12, marginBottom: 16, overflow: 'hidden', border: '1px solid #e5e7eb' }}>
-          <SectionHeader title="Información Adicional Recomendada" icon="❓" section="missing" />
+        <div className="rounded-lg border border-border bg-card overflow-hidden">
+          <SectionHeader
+            icon={HelpCircle}
+            title="Información Adicional Recomendada"
+            section="missing"
+            expanded={expandedSections.missing}
+            onToggle={() => toggleSection("missing")}
+            iconColorClass="text-muted-foreground"
+          />
           {expandedSections.missing && (
-            <div style={{ padding: 20 }}>
-              <ul style={{ paddingLeft: 20, margin: 0 }}>
-                {assessment.missing_questions.map((q: string, idx: number) => (
-                  <li key={idx} style={{ fontSize: 14, color: '#374151', marginBottom: 8, lineHeight: 1.6 }}>{q}</li>
-                ))}
-              </ul>
-            </div>
+            <ul className="p-4 border-t border-border space-y-2 pl-8">
+              {assessment.missing_questions.map((q: string, idx: number) => (
+                <li key={idx} className="text-sm text-muted-foreground leading-relaxed list-disc">
+                  {q}
+                </li>
+              ))}
+            </ul>
           )}
         </div>
       )}
 
-      {/* Limitaciones */}
+      {/* Limitations */}
       {assessment.limitations && (
-        <div style={{ 
-          background: '#fef2f2', 
-          borderRadius: 12, 
-          padding: 20,
-          border: '2px solid #fca5a5'
-        }}>
-          <h3 style={{ fontSize: 16, fontWeight: 700, color: '#991b1b', marginBottom: 8, margin: 0 }}>
-            ⚠️ Limitaciones del Análisis
+        <div className="rounded-lg border border-destructive/30 bg-destructive/5 px-4 py-3">
+          <h3 className="text-xs font-semibold text-destructive flex items-center gap-1.5 mb-1.5">
+            <ShieldAlert className="w-3.5 h-3.5" />
+            Limitaciones del Análisis
           </h3>
-          <p style={{ fontSize: 14, color: '#7f1d1d', lineHeight: 1.6, margin: 0 }}>{assessment.limitations}</p>
+          <p className="text-xs text-muted-foreground leading-relaxed">{assessment.limitations}</p>
         </div>
       )}
     </div>

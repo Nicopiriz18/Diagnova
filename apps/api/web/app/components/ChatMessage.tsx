@@ -1,107 +1,89 @@
+import { User, Stethoscope } from "lucide-react";
+import { cn } from "@/lib/utils";
+
 interface ChatMessageProps {
-  role: 'user' | 'assistant';
+  role: "user" | "assistant";
   content: string;
   images?: string[];
   timestamp: string;
 }
 
 export default function ChatMessage({ role, content, images, timestamp }: ChatMessageProps) {
-  const isUser = role === 'user';
-  
+  const isUser = role === "user";
+
   const formatTime = (isoString: string) => {
     const date = new Date(isoString);
-    return date.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' });
+    return date.toLocaleTimeString("es-ES", { hour: "2-digit", minute: "2-digit" });
   };
 
   return (
-    <div style={{ 
-      display: 'flex', 
-      justifyContent: isUser ? 'flex-end' : 'flex-start',
-      marginBottom: 16,
-      animation: 'fadeIn 0.3s ease-in'
-    }}>
-      <div style={{ 
-        maxWidth: '70%',
-        minWidth: '200px'
-      }}>
-        {/* Avatar y nombre */}
-        <div style={{ 
-          display: 'flex', 
-          alignItems: 'center', 
-          gap: 8,
-          marginBottom: 6,
-          flexDirection: isUser ? 'row-reverse' : 'row'
-        }}>
-          <div style={{
-            width: 32,
-            height: 32,
-            borderRadius: '50%',
-            background: isUser ? '#2563eb' : '#10b981',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            fontSize: 16
-          }}>
-            {isUser ? '👤' : '🏥'}
+    <div
+      className={cn(
+        "flex mb-4 animate-fade-in",
+        isUser ? "justify-end" : "justify-start"
+      )}
+    >
+      <div className={cn("max-w-[72%] min-w-[180px]", isUser && "items-end")}>
+        {/* Avatar + name */}
+        <div
+          className={cn(
+            "flex items-center gap-2 mb-1.5",
+            isUser ? "flex-row-reverse" : "flex-row"
+          )}
+        >
+          <div
+            className={cn(
+              "flex items-center justify-center w-7 h-7 rounded-full shrink-0",
+              isUser
+                ? "bg-primary/20 border border-primary/30"
+                : "bg-emerald-500/10 border border-emerald-500/20"
+            )}
+          >
+            {isUser ? (
+              <User className="w-3.5 h-3.5 text-primary" />
+            ) : (
+              <Stethoscope className="w-3.5 h-3.5 text-emerald-400" />
+            )}
           </div>
-          <span style={{ 
-            fontSize: 12, 
-            color: '#6b7280',
-            fontWeight: 600
-          }}>
-            {isUser ? 'Tú' : 'Diagnova'}
+          <span className="text-xs text-muted-foreground font-medium">
+            {isUser ? "Tú" : "Diagnova"}
           </span>
         </div>
 
-        {/* Mensaje */}
-        <div style={{
-          background: isUser ? '#2563eb' : 'white',
-          color: isUser ? 'white' : '#111827',
-          padding: '12px 16px',
-          borderRadius: isUser ? '18px 18px 4px 18px' : '18px 18px 18px 4px',
-          boxShadow: '0 1px 2px rgba(0,0,0,0.1)',
-          border: isUser ? 'none' : '1px solid #e5e7eb',
-          whiteSpace: 'pre-wrap',
-          wordWrap: 'break-word',
-          lineHeight: 1.5
-        }}>
+        {/* Bubble */}
+        <div
+          className={cn(
+            "px-4 py-3 text-sm leading-relaxed whitespace-pre-wrap break-words",
+            isUser
+              ? "bg-primary text-primary-foreground rounded-2xl rounded-tr-sm shadow-sm"
+              : "bg-card border border-border text-foreground rounded-2xl rounded-tl-sm shadow-sm"
+          )}
+        >
           {content}
         </div>
 
-        {/* Imágenes si existen */}
+        {/* Images */}
         {images && images.length > 0 && (
-          <div style={{ 
-            marginTop: 8,
-            display: 'flex',
-            flexWrap: 'wrap',
-            gap: 8
-          }}>
+          <div className={cn("mt-2 flex flex-wrap gap-2", isUser && "justify-end")}>
             {images.map((img, idx) => (
-              <img 
+              <img
                 key={idx}
                 src={img}
                 alt={`Imagen ${idx + 1}`}
-                style={{
-                  maxWidth: '200px',
-                  maxHeight: '200px',
-                  borderRadius: 12,
-                  objectFit: 'cover',
-                  border: '1px solid #e5e7eb',
-                  cursor: 'pointer'
-                }}
-                onClick={() => window.open(img, '_blank')}
+                className="max-w-[200px] max-h-[200px] rounded-xl object-cover border border-border cursor-pointer hover:opacity-90 transition-opacity"
+                onClick={() => window.open(img, "_blank")}
               />
             ))}
           </div>
         )}
 
         {/* Timestamp */}
-        <div style={{ 
-          fontSize: 11, 
-          color: '#9ca3af',
-          marginTop: 4,
-          textAlign: isUser ? 'right' : 'left'
-        }}>
+        <div
+          className={cn(
+            "text-[11px] text-muted-foreground mt-1",
+            isUser ? "text-right" : "text-left"
+          )}
+        >
           {formatTime(timestamp)}
         </div>
       </div>
