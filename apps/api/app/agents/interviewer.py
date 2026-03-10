@@ -57,8 +57,14 @@ FORMATO DE RESPUESTA:
 Respondé SIEMPRE en formato JSON con esta estructura EXACTA:
 {
   "ready_for_diagnosis": true/false,
+  "reasoning": "Análisis clínico interno: qué información tenés, qué acaba de aportar el paciente, qué falta y por qué hacés la siguiente pregunta",
   "message": "tu mensaje al paciente"
 }
+
+El campo "reasoning" es tu pensamiento clínico interno (en español). Debe ser conciso (2-4 oraciones) y cubrir:
+1. Qué nueva información aportó el paciente en este turno
+2. Qué cuadro clínico estás construyendo o descartando
+3. Qué información crítica falta aún y por qué la necesitás
 
 Si ready_for_diagnosis es true:
 - El mensaje debe ser una transición profesional como: "Gracias por la información. He recopilado suficiente datos para proceder con un análisis diagnóstico completo. Voy a generar una evaluación clínica detallada."
@@ -102,10 +108,12 @@ class InterviewerAgent:
             response_data = self._parse_json_response(raw_content)
             assistant_message = response_data.get("message", raw_content)
             ready_for_diagnosis = response_data.get("ready_for_diagnosis", False)
+            agent_reasoning = response_data.get("reasoning", "")
         except Exception as e:
             # Fallback: treat as regular message if JSON parsing fails
             assistant_message = raw_content
             ready_for_diagnosis = False
+            agent_reasoning = ""
         
         # Update state
         new_messages = state["messages"].copy()
@@ -128,6 +136,7 @@ class InterviewerAgent:
             "turn_count": new_turn_count,
             "last_agent": "interviewer",
             "ready_for_diagnosis": ready_for_diagnosis,
+            "agent_reasoning": agent_reasoning,
         }
     
     def _build_messages(self, state: ConversationState) -> list:
