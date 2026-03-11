@@ -32,6 +32,8 @@ eggs/
 .eggs/
 lib/
 lib64/
+# Allow Next.js lib folder
+!apps/api/web/lib/
 parts/
 sdist/
 var/
